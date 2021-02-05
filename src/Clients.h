@@ -22,7 +22,7 @@
 #if !defined(CLIENTS_H)
 #define CLIENTS_H
 
-#include <stdint.h>
+#include <_stdint.h>
 #include "MQTTTime.h"
 #if defined(OPENSSL)
 #if defined(_WIN32) || defined(_WIN64)

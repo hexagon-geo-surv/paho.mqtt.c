@@ -108,11 +108,12 @@ void* MQTTPacket_Factory(int MQTTVersion, networkHandles* net, int* error)
 	int ptype;
 	void* pack = NULL;
 	size_t actual_len = 0;
+	size_t headerWsFramePos;
 
 	FUNC_ENTRY;
 	*error = SOCKET_ERROR;  /* indicate whether an error occurred, or not */
 
-	const size_t headerWsFramePos = WebSocket_framePos();
+	headerWsFramePos = WebSocket_framePos();
 
 	/* read the packet data from the socket */
 	*error = WebSocket_getch(net, &header.byte);

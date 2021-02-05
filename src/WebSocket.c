@@ -16,7 +16,7 @@
  *    Ian Craggs - fix for one MQTT packet spread over >1 ws frame
  *******************************************************************************/
 
-#include <stdint.h>
+#include <_stdint.h>
 #include <stdio.h>
 #include <string.h>
 // for timeout process in WebSocket_proxy_connect()

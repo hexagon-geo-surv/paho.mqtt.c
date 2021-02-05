@@ -18,7 +18,7 @@
 #if !defined(SOCKET_H)
 #define SOCKET_H
 
-#include <stdint.h>
+#include <_stdint.h>
 #include <sys/types.h>
 
 #if defined(_WIN32) || defined(_WIN64)

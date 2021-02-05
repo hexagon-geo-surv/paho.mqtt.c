@@ -2837,6 +2837,7 @@ static MQTTPacket* MQTTAsync_cycle(int* sock, unsigned long timeout, int* rc)
 {
 	struct timeval tp = {0L, 0L};
 	MQTTPacket* pack = NULL;
+	int rc1 = 0;
 
 	FUNC_ENTRY;
 	if (timeout > 0L)
@@ -2845,7 +2846,7 @@ static MQTTPacket* MQTTAsync_cycle(int* sock, unsigned long timeout, int* rc)
 		tp.tv_usec = (timeout % 1000) * 1000; /* this field is microseconds! */
 	}
 
-	int rc1 = 0;
+
 #if defined(OPENSSL)
 	if ((*sock = SSLSocket_getPendingRead()) == -1)
 	{

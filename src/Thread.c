@@ -200,6 +200,7 @@ sem_type Thread_create_sem(int *rc)
 		        FALSE,              /* initial state is nonsignaled */
 		        NULL                /* object name */
 		        );
+		*rc = (sem == NULL) ? -1 : 0;
 #if 0
 		sem = CreateSemaphore(
 				NULL,				/* default security attributes */

@@ -2482,6 +2482,7 @@ static MQTTPacket* MQTTClient_cycle(int* sock, ELAPSED_TIME_TYPE timeout, int* r
 	struct timeval tp = {0L, 0L};
 	static Ack ack;
 	MQTTPacket* pack = NULL;
+	int rc1 = 0;
 
 	FUNC_ENTRY;
 	if (timeout > 0L)
@@ -2490,7 +2491,6 @@ static MQTTPacket* MQTTClient_cycle(int* sock, ELAPSED_TIME_TYPE timeout, int* r
 		tp.tv_usec = (long)((timeout % 1000) * 1000); /* this field is microseconds! */
 	}
 
-	int rc1 = 0;
 #if defined(OPENSSL)
 	if ((*sock = SSLSocket_getPendingRead()) == -1)
 	{

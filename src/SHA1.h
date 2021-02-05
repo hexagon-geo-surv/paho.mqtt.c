@@ -35,7 +35,7 @@ typedef struct SHA_CTX_S
 } SHA_CTX;
 #else /* if defined(_WIN32) || defined(_WIN64) */
 
-#include <stdint.h>
+#include <_stdint.h>
 typedef struct SHA_CTX_S {
 	uint32_t h[5];
 	union {

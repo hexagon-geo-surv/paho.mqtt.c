@@ -244,10 +244,11 @@ int isReady(int socket, fd_set* read_set, fd_set* write_set)
 int Socket_getReadySocket(int more_work, struct timeval *tp, mutex_type mutex, int* rc)
 {
 	int sock = 0;
-	*rc = 0;
 	static struct timeval zero = {0L, 0L}; /* 0 seconds */
 	static struct timeval one = {1L, 0L}; /* 1 second */
 	struct timeval timeout = one;
+
+	*rc = 0;
 
 	FUNC_ENTRY;
 	Thread_lock_mutex(mutex);

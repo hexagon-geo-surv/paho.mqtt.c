@@ -17,7 +17,7 @@
 #if !defined(MQTTTIME_H)
 #define MQTTTIME_H
 
-#include <stdint.h>
+#include <_stdint.h>
 
 #if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
