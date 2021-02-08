@@ -200,19 +200,7 @@ void MQTTClient_cleanup(void)
 }
 
 #if defined(PAHO_MQTT_STATIC)
-/* Global variable for one-time initialization structure */
-static INIT_ONCE g_InitOnce = INIT_ONCE_STATIC_INIT; /* Static initialization */
-
-/* One time initialization function */
-BOOL CALLBACK InitOnceFunction (
-    PINIT_ONCE InitOnce,        /* Pointer to one-time initialization structure */
-    PVOID Parameter,            /* Optional parameter passed by InitOnceExecuteOnce */
-    PVOID *lpContext)           /* Receives pointer to event object */
-{
-	int rc = MQTTClient_init();
-    return rc == 0;
-}
-
+static LONG staticInitCounter = 0;
 #else
 BOOL APIENTRY DllMain(HANDLE hModule,
 					  DWORD  ul_reason_for_call,
@@ -373,8 +361,8 @@ int MQTTClient_createWithOptions(MQTTClient* handle, const char* serverURI, cons
 	MQTTClients *m = NULL;
 
 #if (defined(_WIN32) || defined(_WIN64)) && defined(PAHO_MQTT_STATIC)
-	/* intializes mutexes once.  Must come before FUNC_ENTRY */
-	BOOL bStatus = InitOnceExecuteOnce(&g_InitOnce, InitOnceFunction, NULL, NULL);
+	if (InterlockedIncrement(&staticInitCounter)== 1)
+		MQTTClient_init();
 #endif
 	FUNC_ENTRY;
 	if ((rc = Thread_lock_mutex(mqttclient_mutex)) != 0)

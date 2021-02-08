@@ -38,7 +38,7 @@ void MQTTTime_sleep(ELAPSED_TIME_TYPE milliseconds)
 #if defined(_WIN32) || defined(_WIN64)
 START_TIME_TYPE MQTTTime_start_clock(void)
 {
-#if WINVER >= _WIN32_WINNT_VISTA
+#if (WINVER >= _WIN32_WINNT_VISTA) && !(UNDER_CE)
 	return GetTickCount64();
 #else
 	return GetTickCount();

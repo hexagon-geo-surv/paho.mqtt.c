@@ -6,14 +6,14 @@
  * and Eclipse Distribution License v1.0 which accompany this distribution.
  *
  * The Eclipse Public License is available at
- *    https://www.eclipse.org/legal/epl-2.0/
+ *	https://www.eclipse.org/legal/epl-2.0/
  * and the Eclipse Distribution License is available at
  *   http://www.eclipse.org/org/documents/edl-v10.php.
  *
  * Contributors:
- *    Ian Craggs - initial API and implementation and/or initial documentation
- *    Ian Craggs - updates for the async client
- *    Ian Craggs - fix for bug #427028
+ *	Ian Craggs - initial API and implementation and/or initial documentation
+ *	Ian Craggs - updates for the async client
+ *	Ian Craggs - fix for bug #427028
  *******************************************************************************/
 
 /**
@@ -186,7 +186,7 @@ int Log_initialize(Log_nameValue* info)
 			trace_output_level = LOG_ERROR;
 	}
 	Log_output(TRACE_MINIMUM, "=========================================================");
-	Log_output(TRACE_MINIMUM, "                   Trace Output");
+	Log_output(TRACE_MINIMUM, "				   Trace Output");
 	if (info)
 	{
 		while (info->name)
@@ -352,8 +352,13 @@ static char* Log_formatTraceEntry(traceEntry* cur_entry)
 static void Log_output(enum LOG_LEVELS log_level, const char *msg)
 {
 	if (trace_destination)
+
 	{
 		fprintf(trace_destination, "%s\n", msg);
+#if !defined(UNDER_CE)
+		// Under CE is often not used standard libc but e.g., corelibc.lib
+		// Functions like vsnprinf, getnev, rename, unlink can be not available
+		// or behaving differently...
 
 		if (trace_destination != stdout && ++lines_written >= max_lines_per_file)
 		{
@@ -368,8 +373,9 @@ static void Log_output(enum LOG_LEVELS log_level, const char *msg)
 		}
 		else
 			fflush(trace_destination);
-	}
+#endif
 
+	}
 	if (trace_callback)
 		(*trace_callback)(log_level, msg);
 }
@@ -408,6 +414,157 @@ static void Log_trace(enum LOG_LEVELS log_level, const char *buf)
 	Log_posttrace(log_level, cur_entry);
 }
 
+#if defined(UNDER_CE) && defined(PAHO_FORCE_STDOUT_LOG_OUTPUT)
+// Under CE is often not used standard libc but e.g., corelibc.lib
+// Functions like vsnprinf, getnev, rename, unlink can be not available
+// or behaving differently...
+
+void wce_itoc_single_digit(char* dest, int pos, int digit) {
+	switch (digit) {
+		case 0: dest[pos] = '0'; break;
+		case 1: dest[pos] = '1'; break;
+		case 2: dest[pos] = '2'; break;
+		case 3: dest[pos] = '3'; break;
+		case 4: dest[pos] = '4'; break;
+		case 5: dest[pos] = '5'; break;
+		case 6: dest[pos] = '6'; break;
+		case 7: dest[pos] = '7'; break;
+		case 8: dest[pos] = '8'; break;
+		case 9: dest[pos] = '9'; break;
+		default: dest[pos] = '.'; break; // just to avoid compiler warnings
+	}
+}
+int wce_vsnprintf(char *target, size_t n, char *format, va_list args) {
+	char *strpos = NULL;
+	char *pos = format;
+	int outindex = 0;
+	char tmp[34]; // build %d values
+	int i, intval, intvalmod;
+	unsigned long ulongval;
+	long longval;
+
+	if (!pos || !target)
+		return 0;
+
+	while (pos && *pos) {
+		if(*pos == '%') {
+			pos++;
+			if (!pos)
+				break;
+			switch (*pos){
+				case 'c':
+				{
+					target[outindex++] = ((char)va_arg( args, int ));
+					if (!(outindex < (n -1))) goto _wce_vsnprintf_exit;
+					pos++;
+					break;
+				}
+				case 'l':
+				{
+					pos++;
+					if (!pos)
+						break;
+					switch (*pos) {
+						case 'u': {
+							ulongval = va_arg( args, unsigned long);
+							i = 0;
+							if (ulongval == 0) {wce_itoc_single_digit(tmp, i++, 0);}
+							while (ulongval > 0) {
+								intvalmod = ulongval % 10;
+								ulongval = ulongval / 10;
+								wce_itoc_single_digit(tmp, i++, intvalmod);
+							}
+
+							while (i > 0) {
+								target[outindex++] = tmp[i-1];
+								if (!(outindex < (n -1))) goto _wce_vsnprintf_exit;
+								i--;
+							}
+							break;
+						}
+						case 'd': {
+							longval = va_arg( args, long);
+							if (longval < 0) {
+								target[outindex++] = '-';
+								if (!(outindex < (n -1))) goto _wce_vsnprintf_exit;
+								longval *= -1;
+							}
+							i = 0;
+							if (longval == 0) {wce_itoc_single_digit(tmp, i++, 0);}
+							while (longval > 0) {
+								intvalmod = longval % 10;
+								longval = longval / 10;
+								wce_itoc_single_digit(tmp, i++, intvalmod);
+							}
+
+							while (i > 0) {
+								target[outindex++] = tmp[i-1];
+								if (!(outindex < (n -1))) goto _wce_vsnprintf_exit;
+								i--;
+							}
+							break;
+						}
+						default:
+							target[outindex++] = 'l';
+							if (!(outindex < (n -1))) goto _wce_vsnprintf_exit;
+							target[outindex++] = *pos;
+							if (!(outindex < (n -1))) goto _wce_vsnprintf_exit;
+							break;
+					}
+					pos++;
+					break;
+				}
+				case 'd': {
+					intval = va_arg( args, int );
+					if (intval < 0) {
+						target[outindex++] = '-';
+						if (!(outindex < (n -1))) goto _wce_vsnprintf_exit;
+						intval *= -1;
+					}
+					i = 0;
+					if (intval == 0) {wce_itoc_single_digit(tmp, i++, 0);}
+					while (intval > 0) {
+						intvalmod = intval % 10;
+						intval = intval / 10;
+						wce_itoc_single_digit(tmp, i++, intvalmod);
+					}
+
+					while (i > 0) {
+						target[outindex++] = tmp[i-1];
+						if (!(outindex < (n -1))) goto _wce_vsnprintf_exit;
+						i--;
+					}
+					pos++;
+					break;
+				}
+				case 's': {
+					strpos = va_arg( args, char* );
+					while (strpos && *strpos) {
+						target[outindex++] = *strpos++;
+						if (!(outindex < (n -1))) goto _wce_vsnprintf_exit;
+					}
+					pos++;
+					break;
+				}
+				default: {
+					target[outindex++] = '%';
+					if (!(outindex < (n -1))) goto _wce_vsnprintf_exit;
+					target[outindex++] = (*pos);
+					if (!(outindex < (n -1))) goto _wce_vsnprintf_exit;
+				}
+			}
+		} else {
+			target[outindex++] = *pos;
+			if (!(outindex < (n -1))) goto _wce_vsnprintf_exit;
+			pos++;
+		}
+	}
+_wce_vsnprintf_exit:
+	target[outindex++] = 0;
+	return outindex;
+}
+#define vsnprintf wce_vsnprintf
+#endif
 
 /**
  * Log a message.  If possible, all messages should be indexed by message number, and
@@ -432,8 +589,25 @@ void Log(enum LOG_LEVELS log_level, int msgno, const char *format, ...)
 
 		va_start(args, format);
 		vsnprintf(msg_buf, sizeof(msg_buf), format, args);
+#if defined(UNDER_CE) && defined(PAHO_FORCE_STDOUT_LOG_OUTPUT)
+		// Under CE is often not used standard libc but e.g., corelibc.lib
+		// Functions like vsnprinf, getnev, rename, unlink can be not available
+		// or behaving differently...
+		//
+		// This is minimalistic tracing implementation: printing of
+		// full messages to std out which is equivalent to tracing in
+		// upstream PAHO will do if you set
+		//
+		// MQTT_C_CLIENT_TRACE=ON
+		// MQTT_C_CLIENT_TRACE_LEVEL=MAXIMUM
+		//
+		// on other platforms
 
+		printf(msg_buf);
+		putchar('\n');
+#else
 		Log_trace(log_level, msg_buf);
+#endif
 		va_end(args);
 		Thread_unlock_mutex(log_mutex);
 	}

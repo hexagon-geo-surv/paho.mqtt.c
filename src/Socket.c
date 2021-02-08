@@ -445,6 +445,14 @@ int Socket_writev(int socket, iobuf* iovecs, int count, unsigned long* bytes)
 	FUNC_ENTRY;
 	*bytes = 0L;
 #if defined(_WIN32) || defined(_WIN64)
+
+#if defined (UNDER_CE)
+	// Windows CE7 stack does not accept 0 len iovec items and returns ERR 10014.
+	// Zero len in the lastt buffer can ocurr e.g., if payload is empty.
+	while (((iovecs + (count - 1))->len == 0) ) {
+		count --;
+	}
+#endif
 	rc = WSASend(socket, iovecs, count, (LPDWORD)bytes, 0, NULL, NULL);
 	if (rc == SOCKET_ERROR)
 	{

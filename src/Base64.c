@@ -16,7 +16,7 @@
 
 #include "Base64.h"
 
-#if defined(_WIN32) || defined(_WIN64)
+#if (defined(_WIN32) || defined(_WIN64))  && !(UNDER_CE)
 #pragma comment(lib, "crypt32.lib")
 #include <windows.h>
 #include <wincrypt.h>
