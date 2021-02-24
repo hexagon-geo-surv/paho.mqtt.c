@@ -69,7 +69,7 @@ int pending_socketcompare(void* a, void* b);
  */
 int socketcompare(void* a, void* b)
 {
-	return ((socket_queue*)a)->socket == *(int*)b;
+	return NULL != a && ((socket_queue*)a)->socket == *(int*)b;
 }
 
 
@@ -387,7 +387,7 @@ exit:
  */
 int pending_socketcompare(void* a, void* b)
 {
-	return ((pending_writes*)a)->socket == *(int*)b;
+	return NULL != a && ((pending_writes*)a)->socket == *(int*)b;
 }
 
 
