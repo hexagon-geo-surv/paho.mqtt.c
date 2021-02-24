@@ -589,6 +589,7 @@ int SSLSocket_createContext(networkHandles* net, MQTTClient_SSLOptions* opts)
 				SSLSocket_error("SSL_CTX_new", NULL, net->socket, rc, opts->ssl_error_cb, opts->ssl_error_context);
 			else
 				SSLSocket_error("SSL_CTX_new", NULL, net->socket, rc, NULL, NULL);
+			rc = -1;
 			goto exit;
 		}
 	}
