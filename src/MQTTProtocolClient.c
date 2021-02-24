@@ -818,6 +818,7 @@ void MQTTProtocol_freeClient(Clients* client)
 	/* free up pending message lists here, and any other allocated data */
 	MQTTProtocol_freeMessageList(client->outboundMsgs);
 	MQTTProtocol_freeMessageList(client->inboundMsgs);
+	ListFree(client->outboundMsgsOrphaned);
 	ListFree(client->messageQueue);
 	free(client->clientID);
         client->clientID = NULL;

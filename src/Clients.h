@@ -134,6 +134,7 @@ typedef struct
 	willMessages* will;             /**< the MQTT will message, if any */
 	List* inboundMsgs;              /**< inbound in flight messages */
 	List* outboundMsgs;				/**< outbound in flight messages */
+        List* outboundMsgsOrphaned;     /**< monitors messages in flight between connection resets */
 	List* messageQueue;             /**< inbound complete but undelivered messages */
 	unsigned int qentry_seqno;
 	void* phandle;                  /**< the persistence handle */

@@ -472,6 +472,7 @@ int MQTTClient_createWithOptions(MQTTClient* handle, const char* serverURI, cons
 	m->c->context = m;
 	m->c->MQTTVersion = (options) ? options->MQTTVersion : MQTTVERSION_DEFAULT;
 	m->c->outboundMsgs = ListInitialize();
+	m->c->outboundMsgsOrphaned = ListInitialize();
 	m->c->inboundMsgs = ListInitialize();
 	m->c->messageQueue = ListInitialize();
 	m->c->clientID = MQTTStrdup(clientId);
@@ -1090,6 +1091,16 @@ static int MQTTClient_cleanSession(Clients* client)
 	rc = MQTTPersistence_clear(client);
 #endif
 	MQTTProtocol_emptyMessageList(client->inboundMsgs);
+	if (client->outboundMsgs->count > 0)
+	{
+		ListElement *current = NULL;
+		while (ListNextElement(client->outboundMsgs, &current) != NULL)
+		{
+			int* msgID = malloc(sizeof(int));
+			*msgID = ((Messages *)current->content)->msgid;
+			ListAppend(client->outboundMsgsOrphaned, msgID, sizeof(int));
+		}
+	}
 	MQTTProtocol_emptyMessageList(client->outboundMsgs);
 	MQTTClient_emptyMessageQueue(client);
 	client->msgID = 0;
@@ -2770,6 +2781,10 @@ static int pubCompare(void* a, void* b)
 	return msg->publish == (Publications*)b;
 }*/
 
+static int IDCompare(void *a, void *b) {
+	int *id = (int *)a;
+	return *id == *(int *)b;
+}
 
 int MQTTClient_waitForCompletion(MQTTClient handle, MQTTClient_deliveryToken mdt, unsigned long timeout)
 {
@@ -2797,6 +2812,15 @@ int MQTTClient_waitForCompletion(MQTTClient handle, MQTTClient_deliveryToken mdt
 		}
 		if (ListFindItem(m->c->outboundMsgs, &mdt, messageIDCompare) == NULL)
 		{
+			if (m->c->cleansession &&
+				ListFindItem(m->c->outboundMsgsOrphaned, &mdt, IDCompare) != NULL)
+			{
+				ListRemoveItem(m->c->outboundMsgsOrphaned, &mdt, IDCompare);
+				// the connection was interrupted and there are some
+				// orphaned messages in the air
+				rc = MQTTCLIENT_DISCONNECTED;
+				goto exit;
+			}
 			rc = MQTTCLIENT_SUCCESS; /* well we couldn't find it */
 			goto exit;
 		}
