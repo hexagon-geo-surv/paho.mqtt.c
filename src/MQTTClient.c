@@ -240,10 +240,18 @@ static mutex_type unsubscribe_mutex = &unsubscribe_mutex_store;
 static pthread_mutex_t connect_mutex_store = PTHREAD_MUTEX_INITIALIZER;
 static mutex_type connect_mutex = &connect_mutex_store;
 
+static uint32_t initCounter = 0;
+
 int MQTTClient_init(void)
 {
 	pthread_mutexattr_t attr;
 	int rc;
+
+	// This atomic "fetch and add" operation doesn't protect from
+	// cases when the thread is interrupted by another one just before
+	// the comparison. However, in case of sequential init/shutdown,
+	// it protect from double init/destruct
+	if (__sync_fetch_and_add(&initCounter, 1) != 0) return 0;
 
 	pthread_mutexattr_init(&attr);
 #if !defined(_WRS_KERNEL)
@@ -263,6 +271,25 @@ int MQTTClient_init(void)
 		printf("MQTTClient: error %d initializing connect_mutex\n", rc);
 
 	return rc;
+}
+
+void MQTTClient_clear(void)
+{
+	// The same reasoning of MQTTClient_init is valid also for this atomic
+	// operation and comparison
+	int rc;
+
+	if (__sync_sub_and_fetch(&initCounter, 1) != 0) return;
+	if ((rc = pthread_mutex_destroy(connect_mutex)) != 0)
+		printf("MQTTClient: error %d destroying connect_mutex\n", rc);
+	if ((rc = pthread_mutex_destroy(unsubscribe_mutex)) != 0)
+		printf("MQTTClient: error %d destroying unsubscribe_mutex\n", rc);
+	if ((rc = pthread_mutex_destroy(subscribe_mutex)) != 0)
+		printf("MQTTClient: error %d destroying subscribe_mutex\n", rc);
+	if ((rc = pthread_mutex_destroy(socket_mutex)) != 0)
+		printf("MQTTClient: error %d destroying socket_mutex\n", rc);
+	if ((rc = pthread_mutex_destroy(mqttclient_mutex)) != 0)
+		printf("MQTTClient: error %d destroying client_mutex\n", rc);
 }
 
 #define WINAPI
