@@ -833,6 +833,11 @@ static thread_return_type WINAPI MQTTClient_run(void* n)
 		MQTTPacket* pack = NULL;
 
 		Thread_unlock_mutex(mqttclient_mutex);
+		// this sleep allows concurrent threads to acquire
+		// mqttclient_mutex, especially on
+		// single core devices or on constrained run
+		// (e.g. Valgrind on Linux)
+		MQTTTime_sleep(1L);
 		pack = MQTTClient_cycle(&sock, timeout, &rc);
 		Thread_lock_mutex(mqttclient_mutex);
 		if (tostop)
