@@ -2785,7 +2785,10 @@ void MQTTClient_yield(void)
 {
 	START_TIME_TYPE start = MQTTTime_start_clock();
 	ELAPSED_TIME_TYPE elapsed = 0L;
-	ELAPSED_TIME_TYPE timeout = 100L;
+	// timeout reduced due to performance reasons
+	// problem appears when sending single packets without buffering
+	// the original gap value of 100ms between send attempts is not acceptable
+	ELAPSED_TIME_TYPE timeout = 10L;
 	int rc = 0;
 
 	FUNC_ENTRY;

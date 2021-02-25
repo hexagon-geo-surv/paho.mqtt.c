@@ -194,6 +194,7 @@ int MQTTPacket_send(networkHandles* net, Header header, char* buffer, size_t buf
 	int rc = SOCKET_ERROR;
 	size_t buf0len;
 	char *buf;
+	int count = (buffer) ? 1 : 0;
 	PacketBuffers packetbufs;
 
 	FUNC_ENTRY;
@@ -213,7 +214,7 @@ int MQTTPacket_send(networkHandles* net, Header header, char* buffer, size_t buf
 		char* ptraux = buffer;
 		int msgId = readInt(&ptraux);
 
-		rc = MQTTPersistence_putPacket(net->socket, buf, buf0len, 1, &buffer, &buflen,
+		rc = MQTTPersistence_putPacket(net->socket, buf, buf0len, count, &buffer, &buflen,
 			header.bits.type, msgId, 0, MQTTVersion);
 	}
 #endif
