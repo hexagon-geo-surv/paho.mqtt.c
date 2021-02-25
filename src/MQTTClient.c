@@ -81,11 +81,20 @@
 #include "VersionInfo.h"
 #include "WebSocket.h"
 
+// Allow mocking of Mqtt client with GMOCK
+// at least on gnu compliant compilers
+#if (defined(__GNUC__))
+#define ATTRIBUTE_WEAK __attribute__((weak))
+#else
+#define ATTRIBUTE_WEAK
+#endif
+
 const char *client_timestamp_eye = "MQTTClientV3_Timestamp " BUILD_TIMESTAMP;
 const char *client_version_eye = "MQTTClientV3_Version " CLIENT_VERSION;
 
 int MQTTClient_init(void);
 
+ATTRIBUTE_WEAK
 void MQTTClient_global_init(MQTTClient_init_options* inits)
 {
 	MQTTClient_init();
@@ -525,7 +534,7 @@ exit:
 	return rc;
 }
 
-
+ATTRIBUTE_WEAK
 int MQTTClient_create(MQTTClient* handle, const char* serverURI, const char* clientId,
 		int persistence_type, void* persistence_context)
 {
@@ -574,7 +583,7 @@ static void MQTTClient_emptyMessageQueue(Clients* client)
 	FUNC_EXIT;
 }
 
-
+ATTRIBUTE_WEAK
 void MQTTClient_destroy(MQTTClient* handle)
 {
 	MQTTClients* m = *handle;
@@ -619,7 +628,7 @@ exit:
 	FUNC_EXIT;
 }
 
-
+ATTRIBUTE_WEAK
 void MQTTClient_freeMessage(MQTTClient_message** message)
 {
 	FUNC_ENTRY;
@@ -630,7 +639,7 @@ void MQTTClient_freeMessage(MQTTClient_message** message)
 	FUNC_EXIT;
 }
 
-
+ATTRIBUTE_WEAK
 void MQTTClient_free(void* memory)
 {
 	FUNC_ENTRY;
@@ -1050,7 +1059,7 @@ static int MQTTClient_stop(void)
 	return rc;
 }
 
-
+ATTRIBUTE_WEAK
 int MQTTClient_setCallbacks(MQTTClient handle, void* context, MQTTClient_connectionLost* cl,
 														MQTTClient_messageArrived* ma, MQTTClient_deliveryComplete* dc)
 {
@@ -1074,7 +1083,6 @@ int MQTTClient_setCallbacks(MQTTClient handle, void* context, MQTTClient_connect
 	FUNC_EXIT_RC(rc);
 	return rc;
 }
-
 
 static void MQTTClient_closeSession(Clients* client, enum MQTTReasonCodes reason, MQTTProperties* props)
 {
@@ -1679,6 +1687,7 @@ exit:
 MQTTResponse MQTTClient_connectAll(MQTTClient handle, MQTTClient_connectOptions* options,
 		MQTTProperties* connectProperties, MQTTProperties* willProperties);
 
+ATTRIBUTE_WEAK
 int MQTTClient_connect(MQTTClient handle, MQTTClient_connectOptions* options)
 {
 	MQTTClients* m = handle;
@@ -1937,12 +1946,13 @@ static int MQTTClient_disconnect_internal(MQTTClient handle, int timeout)
 /**
  * mqttclient_mutex must be locked when you call this function, if multi threaded
  */
+ ATTRIBUTE_WEAK
 void MQTTProtocol_closeSession(Clients* c, int sendwill)
 {
 	MQTTClient_disconnect_internal((MQTTClient)c->context, 0);
 }
 
-
+ATTRIBUTE_WEAK
 int MQTTClient_disconnect(MQTTClient handle, int timeout)
 {
 	int rc = 0;
@@ -1964,7 +1974,7 @@ int MQTTClient_disconnect5(MQTTClient handle, int timeout, enum MQTTReasonCodes 
 	return rc;
 }
 
-
+ATTRIBUTE_WEAK
 int MQTTClient_isConnected(MQTTClient handle)
 {
 	MQTTClients* m = handle;
@@ -1978,7 +1988,6 @@ int MQTTClient_isConnected(MQTTClient handle)
 	FUNC_EXIT_RC(rc);
 	return rc;
 }
-
 
 MQTTResponse MQTTClient_subscribeMany5(MQTTClient handle, int count, char* const* topic,
 		int* qos, MQTTSubscribe_options* opts, MQTTProperties* props)
@@ -2109,7 +2118,7 @@ exit:
 }
 
 
-
+ATTRIBUTE_WEAK
 int MQTTClient_subscribeMany(MQTTClient handle, int count, char* const* topic, int* qos)
 {
 	MQTTClients* m = handle;
@@ -2138,7 +2147,7 @@ MQTTResponse MQTTClient_subscribe5(MQTTClient handle, const char* topic, int qos
 	return rc;
 }
 
-
+ATTRIBUTE_WEAK
 int MQTTClient_subscribe(MQTTClient handle, const char* topic, int qos)
 {
 	MQTTClients* m = handle;
@@ -2152,7 +2161,7 @@ int MQTTClient_subscribe(MQTTClient handle, const char* topic, int qos)
 	return response.reasonCode;
 }
 
-
+ATTRIBUTE_WEAK
 MQTTResponse MQTTClient_unsubscribeMany5(MQTTClient handle, int count, char* const* topic, MQTTProperties* props)
 {
 	MQTTClients* m = handle;
@@ -2256,7 +2265,7 @@ exit:
 	return resp;
 }
 
-
+ATTRIBUTE_WEAK
 int MQTTClient_unsubscribeMany(MQTTClient handle, int count, char* const* topic)
 {
 	MQTTResponse response = MQTTClient_unsubscribeMany5(handle, count, topic, NULL);
@@ -2273,7 +2282,7 @@ MQTTResponse MQTTClient_unsubscribe5(MQTTClient handle, const char* topic, MQTTP
 	return rc;
 }
 
-
+ATTRIBUTE_WEAK
 int MQTTClient_unsubscribe(MQTTClient handle, const char* topic)
 {
 	MQTTResponse response = MQTTClient_unsubscribe5(handle, topic, NULL);
@@ -2421,7 +2430,7 @@ exit:
 	return resp;
 }
 
-
+ATTRIBUTE_WEAK
 int MQTTClient_publish(MQTTClient handle, const char* topicName, int payloadlen, const void* payload,
 							 int qos, int retained, MQTTClient_deliveryToken* deliveryToken)
 {
@@ -2466,7 +2475,7 @@ exit:
 	return rc;
 }
 
-
+ATTRIBUTE_WEAK
 int MQTTClient_publishMessage(MQTTClient handle, const char* topicName, MQTTClient_message* message,
 															 MQTTClient_deliveryToken* deliveryToken)
 {
@@ -2710,7 +2719,7 @@ exit:
 	return pack;
 }
 
-
+ATTRIBUTE_WEAK
 int MQTTClient_receive(MQTTClient handle, char** topicName, int* topicLen, MQTTClient_message** message,
 											 unsigned long timeout)
 {
@@ -2766,7 +2775,7 @@ exit:
 	return rc;
 }
 
-
+ATTRIBUTE_WEAK
 void MQTTClient_yield(void)
 {
 	START_TIME_TYPE start = MQTTTime_start_clock();
@@ -2813,6 +2822,7 @@ static int IDCompare(void *a, void *b) {
 	return *id == *(int *)b;
 }
 
+ATTRIBUTE_WEAK
 int MQTTClient_waitForCompletion(MQTTClient handle, MQTTClient_deliveryToken mdt, unsigned long timeout)
 {
 	int rc = MQTTCLIENT_FAILURE;
@@ -2863,7 +2873,7 @@ exit:
 	return rc;
 }
 
-
+ATTRIBUTE_WEAK
 int MQTTClient_getPendingDeliveryTokens(MQTTClient handle, MQTTClient_deliveryToken **tokens)
 {
 	int rc = MQTTCLIENT_SUCCESS;
@@ -2931,7 +2941,7 @@ int MQTTClient_setCommandTimeout(MQTTClient handle, unsigned long milliSeconds)
 	return rc;
 }
 
-
+ATTRIBUTE_WEAK
 MQTTClient_nameValue* MQTTClient_getVersionInfo(void)
 {
 	#define MAX_INFO_STRINGS 8
