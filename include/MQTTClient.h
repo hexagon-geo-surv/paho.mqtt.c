@@ -644,6 +644,10 @@ typedef struct
 #define MQTT_SSL_VERSION_TLS_1_1 2
 #define MQTT_SSL_VERSION_TLS_1_2 3
 
+/* Are keys/certs provided as a files or strings/buffers? */
+#define MQTT_FILE_STORE          0
+#define MQTT_BUFFER_STORE        1
+
 /**
 * MQTTClient_sslProperties defines the settings to establish an SSL/TLS connection using the
 * OpenSSL library. It covers the following scenarios:
@@ -667,14 +671,17 @@ typedef struct
 	 * 2 means no ssl_error_context, ssl_error_cb
 	 * 3 means no ssl_psk_cb, ssl_psk_context, disableDefaultTrustStore
 	 * 4 means no protos, protos_len
+	 * 5 means no store selection
 	 */
 	int struct_version;
 
-	/** The file in PEM format containing the public digital certificates trusted by the client. */
+	/** The store in PEM format containing the public digital certificates trusted
+	* by the client.
+	*/
 	const char* trustStore;
 
-	/** The file in PEM format containing the public certificate chain of the client. It may also include
-	* the client's private key.
+	/** The store in PEM format containing the public certificate chain of the client.
+	* It may also include the client's private key.
 	*/
 	const char* keyStore;
 
@@ -765,9 +772,15 @@ typedef struct
 	 * Exists only if struct_version >= 5
 	 */
 	unsigned int protos_len;
+
+	/** The media type used to provide trustStore, keyStore and privateKey.
+	* MQTT_FILE_STORE (0), MQTT_BUFFER_STORE (1).
+	* Only used if struct_version is >= 2.
+	*/
+	int storeType;
 } MQTTClient_SSLOptions;
 
-#define MQTTClient_SSLOptions_initializer { {'M', 'Q', 'T', 'S'}, 5, NULL, NULL, NULL, NULL, NULL, 1, MQTT_SSL_VERSION_DEFAULT, 0, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0 }
+#define MQTTClient_SSLOptions_initializer { {'M', 'Q', 'T', 'S'}, 6, NULL, NULL, NULL, NULL, NULL, 1, MQTT_SSL_VERSION_DEFAULT, 0, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, MQTT_FILE_STORE }
 
 /**
   * MQTTClient_libraryInfo is used to store details relating to the currently used
