@@ -1641,7 +1641,11 @@ static MQTTResponse MQTTClient_connectURI(MQTTClient handle, MQTTClient_connectO
 		    m->c->sslopts->protos_len = options->ssl->protos_len;
 		}
 		if (m->c->sslopts->struct_version >= 6)
-			m->c->sslopts->storeType = options->ssl->storeType;
+		{
+			m->c->sslopts->trustStoreType = options->ssl->trustStoreType;
+			m->c->sslopts->keyStoreType = options->ssl->keyStoreType;
+			m->c->sslopts->privateKeyType = options->ssl->privateKeyType;
+		}
 	}
 #endif
 

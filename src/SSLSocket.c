@@ -546,7 +546,9 @@ exit:
 int SSLSocket_createContext(networkHandles* net, MQTTClient_SSLOptions* opts)
 {
 	int rc = 1;
-	unsigned int is_buffer_store = opts->struct_version >= 6 && opts->storeType == MQTT_BUFFER_STORE;
+	unsigned int is_keystore_buffer = opts->struct_version >= 2 && opts->keyStoreType == MQTT_BUFFER_STORE;
+	unsigned int is_truststore_buffer = opts->struct_version >= 2 && opts->trustStoreType == MQTT_BUFFER_STORE;
+	unsigned int is_privatekey_buffer = opts->struct_version >= 2 && opts->privateKeyType == MQTT_BUFFER_STORE;
 
 	FUNC_ENTRY;
 
@@ -598,7 +600,7 @@ int SSLSocket_createContext(networkHandles* net, MQTTClient_SSLOptions* opts)
 
 	if (opts->keyStore)
 	{
-		if (is_buffer_store)
+		if (is_keystore_buffer)
 		{
 			BIO* bio_keystore = BIO_new_mem_buf(opts->keyStore, -1);
 			X509* x509_keystore = PEM_read_bio_X509(bio_keystore, NULL, 0, NULL);
@@ -640,7 +642,7 @@ int SSLSocket_createContext(networkHandles* net, MQTTClient_SSLOptions* opts)
 			SSL_CTX_set_default_passwd_cb_userdata(net->ctx, (void*)opts->privateKeyPassword);
 		}
 
-		if (is_buffer_store)
+		if (is_privatekey_buffer)
 		{
 			BIO* bio_private_key = BIO_new_mem_buf(opts->privateKey, -1);
 			EVP_PKEY* x509_private_key =
@@ -668,7 +670,7 @@ int SSLSocket_createContext(networkHandles* net, MQTTClient_SSLOptions* opts)
 
 	if (opts->trustStore || opts->CApath)
 	{
-		if (is_buffer_store)
+		if (is_truststore_buffer)
 		{
 			BIO* bio_truststore = BIO_new_mem_buf(opts->trustStore, -1);
 			X509* x509_truststore = PEM_read_bio_X509(bio_truststore, NULL, 0, NULL);

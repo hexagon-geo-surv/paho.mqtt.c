@@ -773,14 +773,26 @@ typedef struct
 	 */
 	unsigned int protos_len;
 
-	/** The media type used to provide trustStore, keyStore and privateKey.
+	/** The media type used to provide trustStore.
 	* MQTT_FILE_STORE (0), MQTT_BUFFER_STORE (1).
 	* Only used if struct_version is >= 2.
 	*/
-	int storeType;
+	int trustStoreType;
+
+	/** The media type used to provide keyStore.
+	* MQTT_FILE_STORE (0), MQTT_BUFFER_STORE (1).
+	* Only used if struct_version is >= 2.
+	*/
+	int keyStoreType;
+
+	/** The media type used to provide privateKey.
+	* MQTT_FILE_STORE (0), MQTT_BUFFER_STORE (1).
+	* Only used if struct_version is >= 2.
+	*/
+	int privateKeyType;
 } MQTTClient_SSLOptions;
 
-#define MQTTClient_SSLOptions_initializer { {'M', 'Q', 'T', 'S'}, 6, NULL, NULL, NULL, NULL, NULL, 1, MQTT_SSL_VERSION_DEFAULT, 0, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, MQTT_FILE_STORE }
+#define MQTTClient_SSLOptions_initializer { {'M', 'Q', 'T', 'S'}, 6, NULL, NULL, NULL, NULL, NULL, 1, MQTT_SSL_VERSION_DEFAULT, 0, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, MQTT_FILE_STORE, MQTT_FILE_STORE, MQTT_FILE_STORE }
 
 /**
   * MQTTClient_libraryInfo is used to store details relating to the currently used
