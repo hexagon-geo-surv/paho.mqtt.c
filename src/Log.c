@@ -586,10 +586,9 @@ void Log(enum LOG_LEVELS log_level, int msgno, const char *format, ...)
 		Thread_lock_mutex(log_mutex);
 		if (format == NULL && (temp = Messages_get(msgno, log_level)) != NULL)
 			format = temp;
-
 		va_start(args, format);
 		vsnprintf(msg_buf, sizeof(msg_buf), format, args);
-#if defined(UNDER_CE) && defined(PAHO_FORCE_STDOUT_LOG_OUTPUT)
+#if defined(UNDER_CE)
 		// Under CE is often not used standard libc but e.g., corelibc.lib
 		// Functions like vsnprinf, getnev, rename, unlink can be not available
 		// or behaving differently...
@@ -602,9 +601,11 @@ void Log(enum LOG_LEVELS log_level, int msgno, const char *format, ...)
 		// MQTT_C_CLIENT_TRACE_LEVEL=MAXIMUM
 		//
 		// on other platforms
-
-		printf(msg_buf);
-		putchar('\n');
+		//
+		#if defined(PAHO_FORCE_STDOUT_LOG_OUTPUT)
+				printf(msg_buf);
+				putchar('\n');
+		#endif
 #else
 		Log_trace(log_level, msg_buf);
 #endif
