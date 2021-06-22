@@ -354,8 +354,9 @@ static void Log_output(enum LOG_LEVELS log_level, const char *msg)
 	if (trace_destination)
 
 	{
-		fprintf(trace_destination, "%s\n", msg);
 #if !defined(UNDER_CE)
+		fprintf(trace_destination, "%s\n", msg);
+
 		// Under CE is often not used standard libc but e.g., corelibc.lib
 		// Functions like vsnprinf, getnev, rename, unlink can be not available
 		// or behaving differently...
@@ -577,6 +578,7 @@ _wce_vsnprintf_exit:
  */
 void Log(enum LOG_LEVELS log_level, int msgno, const char *format, ...)
 {
+#if defined(PAHO_ENABLE_LOG)
 	if (log_level >= trace_settings.trace_level)
 	{
 		const char *temp = NULL;
@@ -587,7 +589,6 @@ void Log(enum LOG_LEVELS log_level, int msgno, const char *format, ...)
 		if (format == NULL && (temp = Messages_get(msgno, log_level)) != NULL)
 			format = temp;
 		va_start(args, format);
-		vsnprintf(msg_buf, sizeof(msg_buf), format, args);
 #if defined(UNDER_CE)
 		// Under CE is often not used standard libc but e.g., corelibc.lib
 		// Functions like vsnprinf, getnev, rename, unlink can be not available
@@ -603,15 +604,17 @@ void Log(enum LOG_LEVELS log_level, int msgno, const char *format, ...)
 		// on other platforms
 		//
 		#if defined(PAHO_FORCE_STDOUT_LOG_OUTPUT)
-				printf(msg_buf);
+				vsnprintf(msg_buf, sizeof(msg_buf), format, args);
 				putchar('\n');
 		#endif
 #else
-		Log_trace(log_level, msg_buf);
+				vsnprintf(msg_buf, sizeof(msg_buf), format, args);
+				Log_trace(log_level, msg_buf);
 #endif
 		va_end(args);
 		Thread_unlock_mutex(log_mutex);
 	}
+#endif
 }
 
 
