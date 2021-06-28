@@ -155,6 +155,10 @@ ListElement* ListFindItem(List* aList, void* content, int(*callback)(void*, void
 {
 	ListElement* rc = NULL;
 
+	if (aList == NULL) {
+		return rc;
+	}
+
 	if (aList->current != NULL && ((callback == NULL && aList->current->content == content) ||
 		   (callback != NULL && callback(aList->current->content, content))))
 		rc = aList->current;
