@@ -574,9 +574,12 @@ static void MQTTClient_emptyMessageQueue(Clients* client)
 		{
 			qEntry* qe = (qEntry*)(current->content);
 			free(qe->topicName);
+			qe->topicName = NULL;
 			MQTTProperties_free(&qe->msg->properties);
 			free(qe->msg->payload);
+			qe->msg->payload = NULL;
 			free(qe->msg);
+			qe->msg = NULL;
 		}
 		ListEmpty(client->messageQueue);
 	}
@@ -634,6 +637,7 @@ void MQTTClient_freeMessage(MQTTClient_message** message)
 	FUNC_ENTRY;
 	MQTTProperties_free(&(*message)->properties);
 	free((*message)->payload);
+	(*message)->payload = NULL;
 	free(*message);
 	*message = NULL;
 	FUNC_EXIT;
@@ -644,6 +648,7 @@ void MQTTClient_free(void* memory)
 {
 	FUNC_ENTRY;
 	free(memory);
+	memory = NULL;
 	FUNC_EXIT;
 }
 
@@ -882,12 +887,16 @@ static thread_return_type WINAPI MQTTClient_run(void* n)
 			{
 				qEntry* qe = (qEntry*)(m->c->messageQueue->first->content);
 				int topicLen = qe->topicLen;
+				int msgId = -1;
 
 				if (strlen(qe->topicName) == topicLen)
 					topicLen = 0;
 
 				Log(TRACE_MIN, -1, "Calling messageArrived for client %s, queue depth %d",
 					m->c->clientID, m->c->messageQueue->count);
+
+				msgId = qe->msg->msgid;
+
 				Thread_unlock_mutex(mqttclient_mutex);
 				rc = (*(m->ma))(m->context, qe->topicName, topicLen, qe->msg);
 				Thread_lock_mutex(mqttclient_mutex);
@@ -897,11 +906,27 @@ static thread_return_type WINAPI MQTTClient_run(void* n)
 				 */
 				if (rc)
 				{
-					#if !defined(NO_PERSISTENCE)
-					if (m->c->persistence)
-						MQTTPersistence_unpersistQueueEntry(m->c, (MQTTPersistence_qEntry*)qe);
-					#endif
-					ListRemove(m->c->messageQueue, qe);
+					// just to check if memory wasn't already removed
+					// otherwise it could lead to double fee
+					if (m->c->messageQueue->count > 0)
+					{
+						ListElement* current = NULL;
+						while(ListNextElement(m->c->messageQueue, &current))
+						{
+							qEntry* entry = (qEntry*)(m->c->messageQueue->first->content);
+							if (msgId == entry->msg->msgid)
+							{
+								#if !defined(NO_PERSISTENCE)
+								if (m->c->persistence)
+									MQTTPersistence_unpersistQueueEntry(m->c, (MQTTPersistence_qEntry*)entry);
+								#endif
+								MQTTClient_freeMessage(&(entry->msg));
+								MQTTClient_free(entry->topicName);
+								ListRemove(m->c->messageQueue, entry);
+								break;
+							}
+						}
+					}
 				}
 				else
 					Log(TRACE_MIN, -1, "False returned from messageArrived for client %s, message remains on queue",
