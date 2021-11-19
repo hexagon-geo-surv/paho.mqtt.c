@@ -384,7 +384,7 @@ static int MQTTClient_disconnect1(MQTTClient handle, int timeout, int internal, 
 static int MQTTClient_disconnect_internal(MQTTClient handle, int timeout);
 static void MQTTClient_retry(void);
 static MQTTPacket* MQTTClient_cycle(int* sock, ELAPSED_TIME_TYPE timeout, int* rc);
-static MQTTPacket* MQTTClient_waitfor(MQTTClient handle, int packet_type, int* rc, ELAPSED_TIME_TYPE timeout);
+static MQTTPacket* MQTTClient_waitfor(MQTTClient handle, int packet_type, int* rc, DIFF_TIME_TYPE timeout);
 /*static int pubCompare(void* a, void* b); */
 static void MQTTProtocol_checkPendingWrites(void);
 static void MQTTClient_writeComplete(int socket, int rc);
@@ -2644,7 +2644,7 @@ static MQTTPacket* MQTTClient_cycle(int* sock, ELAPSED_TIME_TYPE timeout, int* r
 }
 
 
-static MQTTPacket* MQTTClient_waitfor(MQTTClient handle, int packet_type, int* rc, ELAPSED_TIME_TYPE timeout)
+static MQTTPacket* MQTTClient_waitfor(MQTTClient handle, int packet_type, int* rc, DIFF_TIME_TYPE timeout)
 {
 	MQTTPacket* pack = NULL;
 	MQTTClients* m = handle;
