@@ -2551,6 +2551,7 @@ static MQTTPacket* MQTTClient_cycle(int* sock, ELAPSED_TIME_TYPE timeout, int* r
 	static Ack ack;
 	MQTTPacket* pack = NULL;
 	int rc1 = 0;
+	START_TIME_TYPE start;
 
 	FUNC_ENTRY;
 	if (timeout > 0L)
@@ -2564,8 +2565,11 @@ static MQTTPacket* MQTTClient_cycle(int* sock, ELAPSED_TIME_TYPE timeout, int* r
 	{
 		/* 0 from getReadySocket indicates no work to do, rc -1 == error */
 #endif
+		start = MQTTTime_start_clock();
 		*sock = Socket_getReadySocket(0, &tp, socket_mutex, rc);
 		*rc = rc1;
+		if (*sock == 0 && timeout >= 100L && MQTTTime_elapsed(start) < (int64_t)100)
+			MQTTTime_sleep(100L);
 #if defined(OPENSSL)
 	}
 #endif
