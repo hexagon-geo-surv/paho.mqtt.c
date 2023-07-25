@@ -125,6 +125,10 @@
 #include "MQTTClientPersistence.h"
 #endif
 
+#if defined(PAHO_PKCS11)
+#include "PKCS11Helpers.h"
+#endif
+
 /**
  * Return code: No error. Indicates successful completion of an MQTT client
  * operation.
@@ -790,9 +794,20 @@ typedef struct
 	* Only used if struct_version is >= 2.
 	*/
 	int privateKeyType;
+
+#if defined(PAHO_PKCS11)
+  /**
+   * Additional parameters required to support PKCS11.
+   */
+  MQTTClient_sslPkcs11Properties pkcs11Properties;
+#endif
 } MQTTClient_SSLOptions;
 
+#if defined(PAHO_PKCS11)
+#define MQTTClient_SSLOptions_initializer { {'M', 'Q', 'T', 'S'}, 6, NULL, NULL, NULL, NULL, NULL, 1, MQTT_SSL_VERSION_DEFAULT, 0, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, MQTT_FILE_STORE, MQTT_FILE_STORE, MQTT_FILE_STORE, { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0 } }
+#else
 #define MQTTClient_SSLOptions_initializer { {'M', 'Q', 'T', 'S'}, 6, NULL, NULL, NULL, NULL, NULL, 1, MQTT_SSL_VERSION_DEFAULT, 0, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, MQTT_FILE_STORE, MQTT_FILE_STORE, MQTT_FILE_STORE }
+#endif
 
 /**
   * MQTTClient_libraryInfo is used to store details relating to the currently used
