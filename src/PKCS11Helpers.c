@@ -41,33 +41,6 @@ void free_sslPkcs11Properties_members(const MQTTClient_sslPkcs11Properties *pkcs
     free((void *)pkcs11Properties->privateKeyTokenPin);
 }
 
-void copy_sslPkcs11Properties_members(const MQTTClient_sslPkcs11Properties *src,
-                                      MQTTClient_sslPkcs11Properties *dst) {
-    if (src->module)
-        dst->module = MQTTStrdup(src->module);
-
-    if (src->caLabel)
-        dst->caLabel = MQTTStrdup(src->caLabel);
-    if (src->caTokenLabel)
-        dst->caTokenLabel = MQTTStrdup(src->caTokenLabel);
-    if (src->caTokenPin)
-        dst->caTokenPin = MQTTStrdup(src->caTokenPin);
-
-    if (src->certLabel)
-        dst->certLabel = MQTTStrdup(src->certLabel);
-    if (src->certTokenLabel)
-        dst->certTokenLabel = MQTTStrdup(src->certTokenLabel);
-    if (src->certTokenPin)
-        dst->certTokenPin = MQTTStrdup(src->certTokenPin);
-
-    if (src->privateKeyLabel)
-        dst->privateKeyLabel = MQTTStrdup(src->privateKeyLabel);
-    if (src->privateKeyTokenLabel)
-        dst->privateKeyTokenLabel = MQTTStrdup(src->privateKeyTokenLabel);
-    if (src->privateKeyTokenPin)
-        dst->privateKeyTokenPin = MQTTStrdup(src->privateKeyTokenPin);
-}
-
 int pkcs11_load_context(MQTTClient_sslPkcs11Properties *pkcs11Properties) {
     if (!pkcs11Properties) {
         return PAHO_PKCS11_OK;
@@ -109,6 +82,43 @@ void pkcs11_unload_context(MQTTClient_sslPkcs11Properties *pkcs11Properties) {
         PKCS11_CTX_free(pkcs11Properties->context);
         pkcs11Properties->context = NULL;
     }
+}
+
+void copy_sslPkcs11Properties_members(const MQTTClient_sslPkcs11Properties *src,
+                                      MQTTClient_sslPkcs11Properties *dst) {
+    if (src->module)
+        dst->module = MQTTStrdup(src->module);
+
+    if (src->caLabel)
+        dst->caLabel = MQTTStrdup(src->caLabel);
+    if (src->caTokenLabel)
+        dst->caTokenLabel = MQTTStrdup(src->caTokenLabel);
+    if (src->caTokenPin)
+        dst->caTokenPin = MQTTStrdup(src->caTokenPin);
+
+    if (src->certLabel)
+        dst->certLabel = MQTTStrdup(src->certLabel);
+    if (src->certTokenLabel)
+        dst->certTokenLabel = MQTTStrdup(src->certTokenLabel);
+    if (src->certTokenPin)
+        dst->certTokenPin = MQTTStrdup(src->certTokenPin);
+
+    if (src->privateKeyLabel)
+        dst->privateKeyLabel = MQTTStrdup(src->privateKeyLabel);
+    if (src->privateKeyTokenLabel)
+        dst->privateKeyTokenLabel = MQTTStrdup(src->privateKeyTokenLabel);
+    if (src->privateKeyTokenPin)
+        dst->privateKeyTokenPin = MQTTStrdup(src->privateKeyTokenPin);
+
+#if !defined(PAHO_USE_EXTERNAL_PKCS11_CONTEXT)
+    if (dst->context && dst->context != src->context) {
+        pkcs11_unload_context(dst);
+    }
+#endif
+
+    dst->context = src->context;
+    dst->slots = src->slots;
+    dst->slotsCount = src->slotsCount;
 }
 
 int pkcs11_load_private_key(const SSL_CTX *ssl_ctx,

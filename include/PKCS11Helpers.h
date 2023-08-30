@@ -13,20 +13,18 @@
 #define PKCS11HELPERS_H
 
 #include <openssl/types.h>
+#include <libp11.h>
 
 // Return codes to be consistent with SSL_CTX_* functions
 #define PAHO_PKCS11_OK 1
 #define PAHO_PKCS11_ERROR 0
-
-struct PKCS11_CTX;
-struct PKCS11_SLOT;
 
 /**
  * MQTTClient_sslPkcs11Properties defines the settings for PKCS11 supported by
  * libp11
  */
 typedef struct {
-  const char *module; // pkcs11 library name
+  const char *module; // pkcs11 library name, ignored if PAHO_USE_EXTERNAL_PKCS11_CONTEXT is set
 
   const char *caLabel;
   const char *caTokenLabel;
@@ -40,8 +38,8 @@ typedef struct {
   const char *privateKeyTokenLabel;
   const char *privateKeyTokenPin;
 
-  struct PKCS11_CTX *context;
-  struct PKCS11_SLOT *slots;
+  PKCS11_CTX *context;
+  PKCS11_SLOT *slots;
   unsigned int slotsCount;
 } MQTTClient_sslPkcs11Properties;
 
