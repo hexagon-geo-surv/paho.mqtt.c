@@ -22,21 +22,24 @@
 int try_log_in(const PKCS11_SLOT *slot, const char *pin);
 PKCS11_SLOT *find_token(const char *label, const PKCS11_CTX *context, const PKCS11_SLOT *slots,
                         unsigned int slotsCount);
-EVP_PKEY *find_key(const char *label, const PKCS11_SLOT *slot);
-X509 *find_certificate(const char *label, const PKCS11_SLOT *slot);
+EVP_PKEY *find_key(const char *label, const char *id, const PKCS11_SLOT *slot);
+X509 *find_certificate(const char *label, const char *id, const PKCS11_SLOT *slot);
 
 void free_sslPkcs11Properties_members(const MQTTClient_sslPkcs11Properties *pkcs11Properties) {
     free((void *)pkcs11Properties->module);
 
     free((void *)pkcs11Properties->caLabel);
+    free((void *)pkcs11Properties->caId);
     free((void *)pkcs11Properties->caTokenLabel);
     free((void *)pkcs11Properties->caTokenPin);
 
     free((void *)pkcs11Properties->certLabel);
+    free((void *)pkcs11Properties->certId);
     free((void *)pkcs11Properties->certTokenLabel);
     free((void *)pkcs11Properties->certTokenPin);
 
     free((void *)pkcs11Properties->privateKeyLabel);
+    free((void *)pkcs11Properties->privateKeyId);
     free((void *)pkcs11Properties->privateKeyTokenLabel);
     free((void *)pkcs11Properties->privateKeyTokenPin);
 }
@@ -91,6 +94,8 @@ void copy_sslPkcs11Properties_members(const MQTTClient_sslPkcs11Properties *src,
 
     if (src->caLabel)
         dst->caLabel = MQTTStrdup(src->caLabel);
+    if (src->caId)
+        dst->caId = MQTTStrdup(src->caId);
     if (src->caTokenLabel)
         dst->caTokenLabel = MQTTStrdup(src->caTokenLabel);
     if (src->caTokenPin)
@@ -98,6 +103,8 @@ void copy_sslPkcs11Properties_members(const MQTTClient_sslPkcs11Properties *src,
 
     if (src->certLabel)
         dst->certLabel = MQTTStrdup(src->certLabel);
+    if (src->certId)
+        dst->certId = MQTTStrdup(src->certId);
     if (src->certTokenLabel)
         dst->certTokenLabel = MQTTStrdup(src->certTokenLabel);
     if (src->certTokenPin)
@@ -105,6 +112,8 @@ void copy_sslPkcs11Properties_members(const MQTTClient_sslPkcs11Properties *src,
 
     if (src->privateKeyLabel)
         dst->privateKeyLabel = MQTTStrdup(src->privateKeyLabel);
+    if (src->privateKeyId)
+        dst->privateKeyId = MQTTStrdup(src->privateKeyId);
     if (src->privateKeyTokenLabel)
         dst->privateKeyTokenLabel = MQTTStrdup(src->privateKeyTokenLabel);
     if (src->privateKeyTokenPin)
@@ -136,7 +145,8 @@ int pkcs11_load_private_key(const SSL_CTX *ssl_ctx,
         goto failed;
     }
 
-    EVP_PKEY *privateKey = find_key(pkcs11Properties->privateKeyLabel, slot);
+    EVP_PKEY *privateKey = find_key(pkcs11Properties->privateKeyLabel,
+                                    pkcs11Properties->privateKeyId, slot);
     if (!privateKey) {
         goto failed;
     }
@@ -165,7 +175,7 @@ int pkcs11_load_certificate(const SSL_CTX *ssl_ctx,
         goto failed;
     }
 
-    X509 *cert = find_certificate(pkcs11Properties->certLabel, slot);
+    X509 *cert = find_certificate(pkcs11Properties->certLabel, pkcs11Properties->certId, slot);
     if (!cert) {
         goto failed;
     }
@@ -196,7 +206,7 @@ int pkcs11_load_ca(const SSL_CTX *ssl_ctx, const MQTTClient_sslPkcs11Properties 
         goto failed;
     }
 
-    X509 *cert = find_certificate(pkcs11Properties->caLabel, slot);
+    X509 *cert = find_certificate(pkcs11Properties->caLabel, pkcs11Properties->caId, slot);
     if (!cert) {
         goto failed;
     }
@@ -258,11 +268,12 @@ PKCS11_SLOT *find_token(const char *label, const PKCS11_CTX *context, const PKCS
     return NULL;
 }
 
-EVP_PKEY *find_key(const char *label, const PKCS11_SLOT *slot) {
+EVP_PKEY *find_key(const char *label, const char *id, const PKCS11_SLOT *slot) {
     PKCS11_KEY *keys;
     unsigned int keysCount;
 
     const unsigned int labelLength = strlen(label);
+    const unsigned int idLength = strlen(id);
     const int rc = PKCS11_enumerate_keys(slot->token, &keys, &keysCount);
     if (rc < 0 || keysCount == 0) {
         return NULL;
@@ -270,8 +281,8 @@ EVP_PKEY *find_key(const char *label, const PKCS11_SLOT *slot) {
 
     for (unsigned int i = 0; i < keysCount; ++i) {
         PKCS11_KEY *key = &keys[i];
-        if (strlen(key->label) == labelLength && memcmp(key->label, label, labelLength) == 0) {
-            /* found the key */
+        if (strlen(key->label) == labelLength && memcmp(key->label, label, labelLength) == 0 &&
+            strlen(key->id) == idLength && memcmp(key->id, id, idLength) == 0) {
             return PKCS11_get_private_key(key);
         }
     }
@@ -279,11 +290,12 @@ EVP_PKEY *find_key(const char *label, const PKCS11_SLOT *slot) {
     return NULL;
 }
 
-X509 *find_certificate(const char *label, const PKCS11_SLOT *slot) {
+X509 *find_certificate(const char *label, const char *id, const PKCS11_SLOT *slot) {
     PKCS11_CERT *certs;
     unsigned int certsCount;
 
     const unsigned int labelLength = strlen(label);
+    const unsigned int idLength = strlen(id);
     const int rc = PKCS11_enumerate_certs(slot->token, &certs, &certsCount);
     if (rc < 0 || certsCount <= 0) {
         return NULL;
@@ -291,9 +303,9 @@ X509 *find_certificate(const char *label, const PKCS11_SLOT *slot) {
 
     for (unsigned int i = 0; i < certsCount; ++i) {
         PKCS11_CERT *cert = &certs[i];
-        if (strlen(cert->label) == labelLength && memcmp(cert->label, label, labelLength) == 0) {
-            /* found the cert */
-            return cert->x509;
+        if (strlen(cert->label) == labelLength && memcmp(cert->label, label, labelLength) == 0 &&
+            strlen(cert->id) == idLength && memcmp(cert->id, id, idLength) == 0) {
+                return cert->x509;
         }
     }
 
