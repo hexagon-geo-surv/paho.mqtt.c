@@ -602,6 +602,36 @@ int SSLSocket_createContext(networkHandles* net, MQTTClient_SSLOptions* opts)
 		}
 	}
 
+	if (opts->tlsMinimumProtocolVersion) {
+		if ((rc = SSL_CTX_set_min_proto_version(net->ctx, opts->tlsMinimumProtocolVersion)) != 1) {
+			if (opts->struct_version >= 3)
+				SSLSocket_error("SSL_CTX_set_min_proto_version", NULL, net->socket, rc, opts->ssl_error_cb, opts->ssl_error_context);
+			else
+				SSLSocket_error("SSL_CTX_set_min_proto_version", NULL, net->socket, rc, NULL, NULL);
+			goto free_ctx;
+		}
+	}
+
+	if (opts->tlsMaximumProtocolVersion) {
+		if ((rc = SSL_CTX_set_max_proto_version(net->ctx, opts->tlsMaximumProtocolVersion)) != 1) {
+			if (opts->struct_version >= 3)
+				SSLSocket_error("SSL_CTX_set_max_proto_version", NULL, net->socket, rc, opts->ssl_error_cb, opts->ssl_error_context);
+			else
+				SSLSocket_error("SSL_CTX_set_max_proto_version", NULL, net->socket, rc, NULL, NULL);
+			goto free_ctx;
+		}
+	}
+
+	if (opts->tlsSignatureAlgorithms) {
+		if ((rc = SSL_CTX_set1_sigalgs_list(net->ctx, opts->tlsSignatureAlgorithms)) != 1) {
+			if (opts->struct_version >= 3)
+				SSLSocket_error("SSL_CTX_set1_sigalgs_list", NULL, net->socket, rc, opts->ssl_error_cb, opts->ssl_error_context);
+			else
+				SSLSocket_error("SSL_CTX_set1_sigalgs_list", NULL, net->socket, rc, NULL, NULL);
+			goto free_ctx;
+		}
+	}
+
 	int certLoaded = 0;
 #if defined(PAHO_PKCS11)
 	if (opts->pkcs11Properties.certLabel) {

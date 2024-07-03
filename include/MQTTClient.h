@@ -707,6 +707,24 @@ typedef struct
 	*/
 	const char* enabledCipherSuites;
 
+	/**
+	* Supported signature algorithms for ctx or ssl.
+	* @see https://www.openssl.org/docs/man1.1.1/man3/SSL_CTX_set1_sigalgs_list.html
+	*/
+	const char* tlsSignatureAlgorithms;
+
+	/**
+	* Minimum supported protocol versions for the ctx or ssl.
+	* @see https://www.openssl.org/docs/man1.1.1/man3/SSL_CTX_set_min_proto_version.html
+	*/
+	int tlsMinimumProtocolVersion;
+
+	/**
+	* Maximum supported protocol versions for the ctx or ssl.
+	* @see https://www.openssl.org/docs/manmaster/man3/SSL_CTX_set_max_proto_version.html
+	*/
+	int tlsMaximumProtocolVersion;
+
     /** True/False option to enable verification of the server certificate **/
     int enableServerCertAuth;
 
@@ -804,9 +822,9 @@ typedef struct
 } MQTTClient_SSLOptions;
 
 #if defined(PAHO_PKCS11)
-#define MQTTClient_SSLOptions_initializer { {'M', 'Q', 'T', 'S'}, 6, NULL, NULL, NULL, NULL, NULL, 1, MQTT_SSL_VERSION_DEFAULT, 0, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, MQTT_FILE_STORE, MQTT_FILE_STORE, MQTT_FILE_STORE, { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0 } }
+#define MQTTClient_SSLOptions_initializer { {'M', 'Q', 'T', 'S'}, 6, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 1, MQTT_SSL_VERSION_DEFAULT, 0, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, MQTT_FILE_STORE, MQTT_FILE_STORE, MQTT_FILE_STORE, { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0 } }
 #else
-#define MQTTClient_SSLOptions_initializer { {'M', 'Q', 'T', 'S'}, 6, NULL, NULL, NULL, NULL, NULL, 1, MQTT_SSL_VERSION_DEFAULT, 0, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, MQTT_FILE_STORE, MQTT_FILE_STORE, MQTT_FILE_STORE }
+#define MQTTClient_SSLOptions_initializer { {'M', 'Q', 'T', 'S'}, 6, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 1, MQTT_SSL_VERSION_DEFAULT, 0, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, MQTT_FILE_STORE, MQTT_FILE_STORE, MQTT_FILE_STORE }
 #endif
 
 /**
