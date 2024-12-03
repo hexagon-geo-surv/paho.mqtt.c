@@ -200,6 +200,11 @@
   * Return code: 0 length will topic on connect
   */
  #define MQTTCLIENT_0_LEN_WILL_TOPIC -17
+ /**
+  * Return code: encountered a critical SSL error. Likely protocol related, such
+  * as certificate verification, handshake failure, etc.
+  */
+#define MQTTCLIENT_CRITICAL_SSL_ERROR -18
 
 
 /**

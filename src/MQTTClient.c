@@ -1386,7 +1386,11 @@ static MQTTResponse MQTTClient_connectURIVersion(MQTTClient handle, MQTTClient_c
 		Thread_unlock_mutex(mqttclient_mutex);
 		MQTTClient_waitfor(handle, CONNECT, &rc, millisecsTimeout - MQTTTime_elapsed(start));
 		Thread_lock_mutex(mqttclient_mutex);
-		if (rc != 1)
+		if (rc == SSL_FATAL) {
+			rc = MQTTCLIENT_CRITICAL_SSL_ERROR;
+			goto exit;
+		}
+		else if (rc != 1)
 		{
 			rc = SOCKET_ERROR;
 			goto exit;
