@@ -76,8 +76,8 @@ void pkcs11_unload_context(MQTTClient_sslPkcs11Properties *pkcs11Properties) {
 
     if (pkcs11Properties->context) {
         if (pkcs11Properties->slots) {
-            PKCS11_release_all_slots(pkcs11Properties->context, pkcs11Properties->slots,
-                                     pkcs11Properties->slotsCount);
+            PKCS11_release_all_slots(pkcs11Properties->context, *pkcs11Properties->slots,
+                                     *pkcs11Properties->slotsCount);
             pkcs11Properties->slots = NULL;
         }
 
@@ -136,7 +136,7 @@ int pkcs11_load_private_key(const SSL_CTX *ssl_ctx,
 
     const PKCS11_SLOT *slot =
         find_token(pkcs11Properties->privateKeyTokenLabel, pkcs11Properties->context,
-                   pkcs11Properties->slots, pkcs11Properties->slotsCount);
+                   *pkcs11Properties->slots, *pkcs11Properties->slotsCount);
     if (!slot) {
         goto failed;
     }
@@ -168,7 +168,7 @@ int pkcs11_load_certificate(const SSL_CTX *ssl_ctx,
 
     const PKCS11_SLOT *slot =
         find_token(pkcs11Properties->certTokenLabel, pkcs11Properties->context,
-                   pkcs11Properties->slots, pkcs11Properties->slotsCount);
+                   *pkcs11Properties->slots, *pkcs11Properties->slotsCount);
     if (!slot) {
         goto failed;
     }
@@ -199,7 +199,7 @@ int pkcs11_load_ca(const SSL_CTX *ssl_ctx, const MQTTClient_sslPkcs11Properties 
     int rc = PAHO_PKCS11_ERROR;
 
     const PKCS11_SLOT *slot = find_token(pkcs11Properties->caTokenLabel, pkcs11Properties->context,
-                                         pkcs11Properties->slots, pkcs11Properties->slotsCount);
+                                         *pkcs11Properties->slots, *pkcs11Properties->slotsCount);
     if (!slot) {
         goto failed;
     }
