@@ -653,6 +653,7 @@ int SSLSocket_createContext(networkHandles* net, MQTTClient_SSLOptions* opts)
 			BIO* bio_keystore = BIO_new_mem_buf(opts->keyStore, -1);
 			X509* x509_keystore = PEM_read_bio_X509(bio_keystore, NULL, 0, NULL);
 			rc = SSL_CTX_use_certificate(net->ctx, x509_keystore);
+			X509_free(x509_keystore);
 			BIO_free(bio_keystore);
 			if (rc != 1)
 			{
