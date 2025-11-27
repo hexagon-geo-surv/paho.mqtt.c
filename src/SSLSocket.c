@@ -759,6 +759,7 @@ int SSLSocket_createContext(networkHandles* net, MQTTClient_SSLOptions* opts)
 				if ((rc = X509_STORE_add_cert(cert_store, x509_truststore)) != 1)
 				{
 				BIO_free(bio_truststore);
+				X509_free(x509_truststore);
 				if (opts->struct_version >= 3)
 					SSLSocket_error("X509_STORE_add_cert", NULL,
 							net->socket, rc, opts->ssl_error_cb,
@@ -768,6 +769,7 @@ int SSLSocket_createContext(networkHandles* net, MQTTClient_SSLOptions* opts)
 							net->socket, rc, NULL, NULL);
 				goto free_ctx;
 				}
+				X509_free(x509_truststore);
 				x509_truststore = PEM_read_bio_X509(bio_truststore, NULL, 0, NULL);
 			}
 			BIO_free(bio_truststore);
