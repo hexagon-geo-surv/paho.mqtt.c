@@ -713,6 +713,7 @@ int SSLSocket_createContext(networkHandles* net, MQTTClient_SSLOptions* opts)
 					0, pem_passwd_cb, opts->privateKeyPassword);
 				rc = SSL_CTX_use_PrivateKey(net->ctx, x509_private_key);
 				BIO_free(bio_private_key);
+				EVP_PKEY_free(x509_private_key);
 			}
 			else
 			{
