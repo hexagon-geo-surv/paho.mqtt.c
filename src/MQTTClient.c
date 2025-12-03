@@ -115,7 +115,7 @@ MQTTProtocol state;
 
 #if defined(_WIN32) || defined(_WIN64)
 static mutex_type mqttclient_mutex = NULL;
-static mutex_type socket_mutex = NULL;
+mutex_type socket_mutex = NULL;
 static mutex_type subscribe_mutex = NULL;
 static mutex_type unsubscribe_mutex = NULL;
 static mutex_type connect_mutex = NULL;
@@ -238,7 +238,7 @@ static pthread_mutex_t mqttclient_mutex_store = PTHREAD_MUTEX_INITIALIZER;
 static mutex_type mqttclient_mutex = &mqttclient_mutex_store;
 
 static pthread_mutex_t socket_mutex_store = PTHREAD_MUTEX_INITIALIZER;
-static mutex_type socket_mutex = &socket_mutex_store;
+mutex_type socket_mutex = &socket_mutex_store;
 
 static pthread_mutex_t subscribe_mutex_store = PTHREAD_MUTEX_INITIALIZER;
 static mutex_type subscribe_mutex = &subscribe_mutex_store;
@@ -1128,8 +1128,8 @@ static void MQTTClient_closeSession(Clients* client, enum MQTTReasonCodes reason
 		client->session = NULL; /* show the session has been freed */
 		SSLSocket_close(&client->net);
 #endif
-		Socket_close(client->net.socket);
 		Thread_unlock_mutex(socket_mutex);
+		Socket_close(client->net.socket);
 		client->net.socket = 0;
 #if defined(OPENSSL)
 		client->net.ssl = NULL;

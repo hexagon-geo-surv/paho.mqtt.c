@@ -67,6 +67,8 @@ int Socket_abortWrite(int socket);
 Sockets mod_s;
 static fd_set wset;
 
+extern mutex_type socket_mutex;
+
 /**
  * Set a socket non-blocking, OS independently
  * @param sock the socket to set non-blocking
@@ -172,6 +174,7 @@ int Socket_addSocket(int newSd)
 	int rc = 0;
 
 	FUNC_ENTRY;
+	Thread_lock_mutex(socket_mutex);
 	if (ListFindItem(mod_s.clientsds, &newSd, intcompare) == NULL) /* make sure we don't add the same socket twice */
 	{
 		if (mod_s.clientsds->count >= FD_SETSIZE)
@@ -206,6 +209,7 @@ int Socket_addSocket(int newSd)
 		Log(LOG_ERROR, -1, "addSocket: socket %d already in the list", newSd);
 
 exit:
+	Thread_unlock_mutex(socket_mutex);
 	FUNC_EXIT_RC(rc);
 	return rc;
 }
@@ -650,6 +654,7 @@ int Socket_close_only(int socket)
 void Socket_close(int socket)
 {
 	FUNC_ENTRY;
+	Thread_lock_mutex(socket_mutex);
 	Socket_close_only(socket);
 	FD_CLR(socket, &(mod_s.rset_saved));
 	if (FD_ISSET(socket, &(mod_s.pending_wset)))
@@ -676,6 +681,7 @@ void Socket_close(int socket)
 		++(mod_s.maxfdp1);
 		Log(TRACE_MAX, -1, "Reset max fdp1 to %d", mod_s.maxfdp1);
 	}
+	Thread_unlock_mutex(socket_mutex);
 	FUNC_EXIT;
 }
 
@@ -835,6 +841,7 @@ int Socket_new(const char* addr, size_t addr_len, int port, int* sock)
 				if (rc == EINPROGRESS || rc == EWOULDBLOCK)
 				{
 					int* pnewSd = (int*)malloc(sizeof(int));
+					ListElement* listResult = NULL;
 
 					if (!pnewSd)
 					{
@@ -842,7 +849,10 @@ int Socket_new(const char* addr, size_t addr_len, int port, int* sock)
 						goto exit;
 					}
 					*pnewSd = *sock;
-					if (!ListAppend(mod_s.connect_pending, pnewSd, sizeof(int)))
+					Thread_lock_mutex(socket_mutex);
+					listResult = ListAppend(mod_s.connect_pending, pnewSd, sizeof(int));
+					Thread_unlock_mutex(socket_mutex);
+					if (!listResult)
 					{
 						free(pnewSd);
 						rc = PAHO_MEMORY_ERROR;
