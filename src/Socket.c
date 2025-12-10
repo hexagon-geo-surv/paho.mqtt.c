@@ -275,6 +275,12 @@ int Socket_getReadySocket(int more_work, struct timeval *tp, mutex_type mutex, i
 		memcpy((void*)&(mod_s.rset), (void*)&(mod_s.rset_saved), sizeof(mod_s.rset));
 		memcpy((void*)&(pwset), (void*)&(mod_s.pending_wset), sizeof(pwset));
 		maxfdp1_saved = mod_s.maxfdp1;
+
+		if (maxfdp1_saved == 0)
+		{
+			sock = 0;
+			goto exit; /* no work to do */
+		}
 		/* Prevent performance issue by unlocking the socket_mutex while waiting for a ready socket. */
 		Thread_unlock_mutex(mutex);
 		*rc = select(maxfdp1_saved, &(mod_s.rset), &pwset, NULL, &timeout);
