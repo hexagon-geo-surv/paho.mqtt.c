@@ -221,7 +221,7 @@ int MQTTProtocol_connect(const char* ip_address, Clients* aClient, int websocket
 
 	FUNC_ENTRY;
 
-#if defined(PAHO_PKCS11) && !defined(PAHO_USE_EXTERNAL_PKCS11_CONTEXT)
+#if defined(PAHO_PKCS11)
 	MQTTClient_SSLOptions *sslopts = aClient->sslopts;
 	if(sslopts && sslopts->pkcs11Properties.module) {
 		rc = pkcs11_load_context(&sslopts->pkcs11Properties);

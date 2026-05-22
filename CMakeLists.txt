@@ -59,11 +59,6 @@ target_compile_definitions(Paho PRIVATE OPENSSL)
 
 if (ENABLE_PKCS11_SUPPORT)
     target_compile_definitions(Paho PRIVATE PAHO_PKCS11)
-    if (PAHO_USE_EXTERNAL_PKCS11_CONTEXT)
-        # assume that PKCS#11 context is loaded and unloaded by external code and is always
-        # available for Paho to use
-        target_compile_definitions(Paho PRIVATE PAHO_USE_EXTERNAL_PKCS11_CONTEXT)
-    endif()
 endif()
 
 if (ANDROID)

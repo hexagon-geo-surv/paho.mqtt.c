@@ -1134,7 +1134,7 @@ static void MQTTClient_closeSession(Clients* client, enum MQTTReasonCodes reason
 #if defined(OPENSSL)
 		client->net.ssl = NULL;
 
-#if defined(PAHO_PKCS11) && !defined(PAHO_USE_EXTERNAL_PKCS11_CONTEXT)
+#if defined(PAHO_PKCS11)
 		pkcs11_unload_context(&client->sslopts->pkcs11Properties);
 #endif
 
