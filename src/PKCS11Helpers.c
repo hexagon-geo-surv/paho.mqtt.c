@@ -59,8 +59,8 @@ int pkcs11_load_context(MQTTClient_sslPkcs11Properties *pkcs11Properties) {
     }
 
     if (!pkcs11Properties->slots) {
-        if (PKCS11_enumerate_slots(pkcs11Properties->context, pkcs11Properties->slots,
-                                   pkcs11Properties->slotsCount) < 0) {
+        if (PKCS11_enumerate_slots(pkcs11Properties->context, &pkcs11Properties->slots,
+                                   &pkcs11Properties->slotsCount) < 0) {
             fprintf(stderr, "Can't enumerate PKCS11 slots\n");
             return PAHO_MEMORY_ERROR;
         }
