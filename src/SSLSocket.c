@@ -44,10 +44,6 @@
 #include <openssl/crypto.h>
 #include <openssl/x509v3.h>
 
-#if defined(PAHO_PKCS11)
-#include "PKCS11Helpers.h"
-#endif
-
 extern Sockets mod_s;
 
 static int SSLSocket_error(char* aString, SSL* ssl, int sock, int rc, int (*cb)(const char *str, size_t len, void *u), void* u);
@@ -632,20 +628,6 @@ int SSLSocket_createContext(networkHandles* net, MQTTClient_SSLOptions* opts)
 		}
 	}
 
-	int certLoaded = 0;
-#if defined(PAHO_PKCS11)
-	if (opts->pkcs11Properties.certLabel) {
-		rc = pkcs11_load_certificate(net->ctx, &opts->pkcs11Properties);
-		if (rc != PAHO_PKCS11_OK) {
-			if (opts->struct_version >= 3)
-				SSLSocket_error("pkcs11_load_certificate", NULL, net->socket, rc, opts->ssl_error_cb, opts->ssl_error_context);
-			else
-				SSLSocket_error("pkcs11_load_certificate", NULL, net->socket, rc, NULL, NULL);
-			goto free_ctx;
-		}
-		certLoaded = 1;
-	} else
-#endif
 	if (opts->keyStore)
 	{
 		if (is_keystore_buffer)
@@ -681,73 +663,43 @@ int SSLSocket_createContext(networkHandles* net, MQTTClient_SSLOptions* opts)
 				goto free_ctx;
 			}
 		}
-		certLoaded = 1;
-	}
-	if (certLoaded == 1) {
-#if defined(PAHO_PKCS11)
-		if (opts->pkcs11Properties.privateKeyLabel) {
-			rc = pkcs11_load_private_key(net->ctx, &opts->pkcs11Properties);
- 			if (rc != PAHO_PKCS11_OK) {
-				if (opts->struct_version >= 3)
-					SSLSocket_error("pkcs11_load_private_key", NULL, net->socket, rc, opts->ssl_error_cb, opts->ssl_error_context);
-				else
-					SSLSocket_error("pkcs11_load_private_key", NULL, net->socket, rc, NULL, NULL);
-				goto free_ctx;
-			}
-		} else {
-#endif
-			if (opts->privateKey == NULL)
-				opts->privateKey = opts->keyStore;   /* the privateKey can be included in the keyStore */
 
-			if (opts->privateKeyPassword != NULL)
-			{
-				SSL_CTX_set_default_passwd_cb(net->ctx, pem_passwd_cb);
-				SSL_CTX_set_default_passwd_cb_userdata(net->ctx, (void*)opts->privateKeyPassword);
-			}
+		if (opts->privateKey == NULL)
+			opts->privateKey = opts->keyStore;   /* the privateKey can be included in the keyStore */
 
-			if (is_privatekey_buffer)
-			{
-				BIO* bio_private_key = BIO_new_mem_buf(opts->privateKey, -1);
-				EVP_PKEY* x509_private_key =
-				PEM_read_bio_PrivateKey(bio_private_key,
-					0, pem_passwd_cb, opts->privateKeyPassword);
-				rc = SSL_CTX_use_PrivateKey(net->ctx, x509_private_key);
-				BIO_free(bio_private_key);
-				EVP_PKEY_free(x509_private_key);
-			}
-			else
-			{
-				/* support for ASN.1 == DER format? DER can contain only one certificate? */
-				rc = SSL_CTX_use_PrivateKey_file(net->ctx, opts->privateKey, SSL_FILETYPE_PEM);
-			}
-			if (opts->privateKey == opts->keyStore)
-				opts->privateKey = NULL;
-			if (rc != 1)
-			{
-				if (opts->struct_version >= 3)
-					SSLSocket_error("SSL_CTX_use_PrivateKey_file", NULL, net->socket, rc, opts->ssl_error_cb, opts->ssl_error_context);
-				else
-					SSLSocket_error("SSL_CTX_use_PrivateKey_file", NULL, net->socket, rc, NULL, NULL);
-				goto free_ctx;
-			}
-#if defined(PAHO_PKCS11)
+		if (opts->privateKeyPassword != NULL)
+		{
+			SSL_CTX_set_default_passwd_cb(net->ctx, pem_passwd_cb);
+			SSL_CTX_set_default_passwd_cb_userdata(net->ctx, (void*)opts->privateKeyPassword);
 		}
-#endif
-	}
 
-#if defined(PAHO_PKCS11)
-	if (opts->pkcs11Properties.caLabel) {
-		rc = pkcs11_load_ca(net->ctx, &opts->pkcs11Properties);
-		if (rc != PAHO_PKCS11_OK) {
+		if (is_privatekey_buffer)
+		{
+			BIO* bio_private_key = BIO_new_mem_buf(opts->privateKey, -1);
+			EVP_PKEY* x509_private_key =
+			PEM_read_bio_PrivateKey(bio_private_key,
+				0, pem_passwd_cb, opts->privateKeyPassword);
+			rc = SSL_CTX_use_PrivateKey(net->ctx, x509_private_key);
+			BIO_free(bio_private_key);
+			EVP_PKEY_free(x509_private_key);
+		}
+		else
+		{
+			/* support for ASN.1 == DER format? DER can contain only one certificate? */
+			rc = SSL_CTX_use_PrivateKey_file(net->ctx, opts->privateKey, SSL_FILETYPE_PEM);
+		}
+		if (opts->privateKey == opts->keyStore)
+			opts->privateKey = NULL;
+		if (rc != 1)
+		{
 			if (opts->struct_version >= 3)
-				SSLSocket_error("pkcs11_load_ca", NULL, net->socket, rc, opts->ssl_error_cb, opts->ssl_error_context);
+				SSLSocket_error("SSL_CTX_use_PrivateKey_file", NULL, net->socket, rc, opts->ssl_error_cb, opts->ssl_error_context);
 			else
-				SSLSocket_error("pkcs11_load_ca", NULL, net->socket, rc, NULL, NULL);
+				SSLSocket_error("SSL_CTX_use_PrivateKey_file", NULL, net->socket, rc, NULL, NULL);
 			goto free_ctx;
 		}
 	}
-	else
-#endif
+
 	if (opts->trustStore || opts->CApath)
 	{
 		if (is_truststore_buffer)

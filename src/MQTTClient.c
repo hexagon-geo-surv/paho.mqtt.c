@@ -1133,11 +1133,6 @@ static void MQTTClient_closeSession(Clients* client, enum MQTTReasonCodes reason
 		client->net.socket = 0;
 #if defined(OPENSSL)
 		client->net.ssl = NULL;
-
-#if defined(PAHO_PKCS11)
-		pkcs11_unload_context(&client->sslopts->pkcs11Properties);
-#endif
-
 #endif
 	}
 	client->connected = 0;
@@ -1638,9 +1633,6 @@ static MQTTResponse MQTTClient_connectURI(MQTTClient handle, MQTTClient_connectO
 			if (m->c->sslopts->CApath)
 				free((void*)m->c->sslopts->CApath);
 		}
-#if defined(PAHO_PKCS11)
-		free_sslPkcs11Properties_members(&m->c->sslopts->pkcs11Properties);
-#endif
 		free(m->c->sslopts);
 		m->c->sslopts = NULL;
 	}
@@ -1669,9 +1661,6 @@ static MQTTResponse MQTTClient_connectURI(MQTTClient handle, MQTTClient_connectO
 		m->c->sslopts->tlsMinimumProtocolVersion = options->ssl->tlsMinimumProtocolVersion;
 		m->c->sslopts->tlsMaximumProtocolVersion = options->ssl->tlsMaximumProtocolVersion;
 		m->c->sslopts->enableServerCertAuth = options->ssl->enableServerCertAuth;
-#if defined(PAHO_PKCS11)
-		copy_sslPkcs11Properties_members(&options->ssl->pkcs11Properties, &m->c->sslopts->pkcs11Properties);
-#endif
 		if (m->c->sslopts->struct_version >= 1)
 			m->c->sslopts->sslVersion = options->ssl->sslVersion;
 		if (m->c->sslopts->struct_version >= 2)

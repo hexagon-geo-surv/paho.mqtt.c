@@ -11,17 +11,11 @@
 //--------------------------------------------------------//
 ]]
 
-message(STATUS "MQTT Paho: Support for PKCS#11 is: ${ENABLE_PKCS11_SUPPORT}")
-
 # Sources
 file(GLOB SRCS_G "src/*.cpp" "src/*.c")
 list(REMOVE_ITEM SRCS_G "${CMAKE_CURRENT_SOURCE_DIR}/src/MQTTAsync.c")
 list(REMOVE_ITEM SRCS_G "${CMAKE_CURRENT_SOURCE_DIR}/src/MQTTAsyncUtils.c")
 list(REMOVE_ITEM SRCS_G "${CMAKE_CURRENT_SOURCE_DIR}/src/MQTTVersion.c")
-
-if (NOT ENABLE_PKCS11_SUPPORT)
-    list(REMOVE_ITEM SRCS_G "${CMAKE_CURRENT_SOURCE_DIR}/src/PKCS11Helpers.c")
-endif()
 
 POCO_SOURCES_AUTO(SRCS ${SRCS_G})
 
@@ -40,10 +34,6 @@ endif ()
 
 target_link_libraries(Paho PRIVATE OpenSSL::SSL)
 
-if (ENABLE_PKCS11_SUPPORT)
-    target_link_libraries(Paho PRIVATE Libp11)
-endif()
-
 if (WIN32)
     target_link_libraries(Paho PRIVATE ws2_32)
 endif ()
@@ -56,11 +46,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif ()
 
 target_compile_definitions(Paho PRIVATE OPENSSL)
-
-if (ENABLE_PKCS11_SUPPORT)
-    target_compile_definitions(Paho PRIVATE PAHO_PKCS11)
-endif()
-
 if (ANDROID)
     if ((${CMAKE_SYSTEM_VERSION} GREATER 23) OR FORCE_PAHO_ANDROID_API_23_PLUS)
         target_compile_definitions(Paho PRIVATE POCO_NO_LINUX_IF_PACKET_H POCO_SET_NETWORKINTERFACE)
@@ -78,10 +63,10 @@ endif ()
 target_compile_definitions(Paho PRIVATE NO_PERSISTENCE)
 
 target_include_directories(Paho
-    PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
-)
+        PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
+        )
 
 POCO_INSTALL(Paho)

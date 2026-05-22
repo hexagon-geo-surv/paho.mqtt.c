@@ -40,10 +40,6 @@
 #include "WebSocket.h"
 #include "Base64.h"
 
-#if defined(PAHO_PKCS11)
-#include "PKCS11Helpers.h"
-#endif
-
 extern ClientStates* bstate;
 
 
@@ -220,17 +216,6 @@ int MQTTProtocol_connect(const char* ip_address, Clients* aClient, int websocket
 	char* p0;
 
 	FUNC_ENTRY;
-
-#if defined(PAHO_PKCS11)
-	MQTTClient_SSLOptions *sslopts = aClient->sslopts;
-	if(sslopts && sslopts->pkcs11Properties.module) {
-		rc = pkcs11_load_context(&sslopts->pkcs11Properties);
-		if (rc != PAHO_PKCS11_OK) {
-			goto exit;
-		}
-	}
-#endif
-
 	aClient->good = 1;
 
 	if (aClient->httpProxy)
