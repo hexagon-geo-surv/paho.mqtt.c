@@ -156,8 +156,6 @@ int pkcs11_load_private_key(const SSL_CTX *ssl_ctx,
 failed:
     if (rc != PAHO_PKCS11_OK)
         ERR_print_errors_fp(stderr);
-    if (privateKey)
-        EVP_PKEY_free(privateKey);
 
     return rc;
 }
