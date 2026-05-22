@@ -27,17 +27,14 @@ typedef struct {
   const char *module; // pkcs11 library name, ignored if PAHO_USE_EXTERNAL_PKCS11_CONTEXT is set
 
   const char *caLabel;
-  const char *caId;
   const char *caTokenLabel;
   const char *caTokenPin;
 
   const char *certLabel;
-  const char *certId;
   const char *certTokenLabel;
   const char *certTokenPin;
 
   const char *privateKeyLabel;
-  const char *privateKeyId;
   const char *privateKeyTokenLabel;
   const char *privateKeyTokenPin;
 
