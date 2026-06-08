@@ -215,13 +215,23 @@ int pkcs11_load_ca(const SSL_CTX *ssl_ctx, const MQTTClient_sslPkcs11Properties 
     }
 
     X509_STORE *x509_store = SSL_CTX_get_cert_store(ssl_ctx);
+    if (!x509_store) {
+        fprintf(stderr, "PKCS11: SSL_CTX_get_cert_store returned NULL\n");
+        goto failed;
+    }
+
     X509_LOOKUP *lookup;
 
     lookup = X509_STORE_add_lookup(x509_store, X509_LOOKUP_file());
     if (!lookup) {
         goto failed;
     }
-    if (!X509_STORE_add_cert(X509_LOOKUP_get_store(lookup), cert)) {
+    X509_STORE *lookup_store = X509_LOOKUP_get_store(lookup);
+    if (!lookup_store) {
+        fprintf(stderr, "PKCS11: X509_LOOKUP_get_store returned NULL\n");
+        goto failed;
+    }
+    if (!X509_STORE_add_cert(lookup_store, cert)) {
         goto failed;
     }
 
