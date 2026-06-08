@@ -25,23 +25,40 @@ PKCS11_SLOT *find_token(const char *label, const PKCS11_CTX *context, const PKCS
 EVP_PKEY *find_key(const char *label, const char *id, const PKCS11_SLOT *slot);
 X509 *find_certificate(const char *label, const char *id, const PKCS11_SLOT *slot);
 
-void free_sslPkcs11Properties_members(const MQTTClient_sslPkcs11Properties *pkcs11Properties) {
+void free_sslPkcs11Properties_members(MQTTClient_sslPkcs11Properties *pkcs11Properties) {
+    if (!pkcs11Properties) {
+        return;
+    }
+
     free((void *)pkcs11Properties->module);
+    pkcs11Properties->module = NULL;
 
     free((void *)pkcs11Properties->caLabel);
+    pkcs11Properties->caLabel = NULL;
     free((void *)pkcs11Properties->caId);
+    pkcs11Properties->caId = NULL;
     free((void *)pkcs11Properties->caTokenLabel);
+    pkcs11Properties->caTokenLabel = NULL;
     free((void *)pkcs11Properties->caTokenPin);
+    pkcs11Properties->caTokenPin = NULL;
 
     free((void *)pkcs11Properties->certLabel);
+    pkcs11Properties->certLabel = NULL;
     free((void *)pkcs11Properties->certId);
+    pkcs11Properties->certId = NULL;
     free((void *)pkcs11Properties->certTokenLabel);
+    pkcs11Properties->certTokenLabel = NULL;
     free((void *)pkcs11Properties->certTokenPin);
+    pkcs11Properties->certTokenPin = NULL;
 
     free((void *)pkcs11Properties->privateKeyLabel);
+    pkcs11Properties->privateKeyLabel = NULL;
     free((void *)pkcs11Properties->privateKeyId);
+    pkcs11Properties->privateKeyId = NULL;
     free((void *)pkcs11Properties->privateKeyTokenLabel);
+    pkcs11Properties->privateKeyTokenLabel = NULL;
     free((void *)pkcs11Properties->privateKeyTokenPin);
+    pkcs11Properties->privateKeyTokenPin = NULL;
 }
 
 int pkcs11_load_context(MQTTClient_sslPkcs11Properties *pkcs11Properties) {
