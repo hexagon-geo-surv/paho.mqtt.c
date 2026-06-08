@@ -133,6 +133,7 @@ void copy_sslPkcs11Properties_members(const MQTTClient_sslPkcs11Properties *src,
 int pkcs11_load_private_key(const SSL_CTX *ssl_ctx,
                             const MQTTClient_sslPkcs11Properties *pkcs11Properties) {
     int rc = PAHO_PKCS11_ERROR;
+    EVP_PKEY *privateKey = NULL;
 
     const PKCS11_SLOT *slot =
         find_token(pkcs11Properties->privateKeyTokenLabel, pkcs11Properties->context,
@@ -145,8 +146,8 @@ int pkcs11_load_private_key(const SSL_CTX *ssl_ctx,
         goto failed;
     }
 
-    EVP_PKEY *privateKey = find_key(pkcs11Properties->privateKeyLabel,
-                                    pkcs11Properties->privateKeyId, slot);
+    privateKey = find_key(pkcs11Properties->privateKeyLabel,
+                          pkcs11Properties->privateKeyId, slot);
     if (!privateKey) {
         goto failed;
     }
@@ -250,6 +251,10 @@ int try_log_in(const PKCS11_SLOT *slot, const char *pin) {
 
 PKCS11_SLOT *find_token(const char *label, const PKCS11_CTX *context, const PKCS11_SLOT *slots,
                         unsigned int slotsCount) {
+    if (!label) {
+        fprintf(stderr, "PKCS11: find_token called with NULL label\n");
+        return NULL;
+    }
 
     const unsigned int labelLength = strlen(label);
     PKCS11_SLOT *slot = PKCS11_find_token(context, slots, slotsCount);
@@ -271,6 +276,11 @@ PKCS11_SLOT *find_token(const char *label, const PKCS11_CTX *context, const PKCS
 }
 
 EVP_PKEY *find_key(const char *label, const char *id, const PKCS11_SLOT *slot) {
+    if (!label || !id) {
+        fprintf(stderr, "PKCS11: find_key called with NULL label or id\n");
+        return NULL;
+    }
+
     PKCS11_KEY *keys;
     unsigned int keysCount;
 
@@ -283,6 +293,9 @@ EVP_PKEY *find_key(const char *label, const char *id, const PKCS11_SLOT *slot) {
 
     for (unsigned int i = 0; i < keysCount; ++i) {
         PKCS11_KEY *key = &keys[i];
+        if (!key->label) {
+            continue;
+        }
         if (strlen(key->label) == labelLength && memcmp(key->label, label, labelLength) == 0 &&
             key->id_len == idLength && memcmp(key->id, id, idLength) == 0) {
             return PKCS11_get_private_key(key);
@@ -293,6 +306,11 @@ EVP_PKEY *find_key(const char *label, const char *id, const PKCS11_SLOT *slot) {
 }
 
 X509 *find_certificate(const char *label, const char *id, const PKCS11_SLOT *slot) {
+    if (!label || !id) {
+        fprintf(stderr, "PKCS11: find_certificate called with NULL label or id\n");
+        return NULL;
+    }
+
     PKCS11_CERT *certs;
     unsigned int certsCount;
 
@@ -305,6 +323,9 @@ X509 *find_certificate(const char *label, const char *id, const PKCS11_SLOT *slo
 
     for (unsigned int i = 0; i < certsCount; ++i) {
         PKCS11_CERT *cert = &certs[i];
+        if (!cert->label) {
+            continue;
+        }
         if (strlen(cert->label) == labelLength && memcmp(cert->label, label, labelLength) == 0 &&
             cert->id_len == idLength && memcmp(cert->id, id, idLength) == 0) {
                 return cert->x509;
