@@ -284,7 +284,7 @@ EVP_PKEY *find_key(const char *label, const char *id, const PKCS11_SLOT *slot) {
     for (unsigned int i = 0; i < keysCount; ++i) {
         PKCS11_KEY *key = &keys[i];
         if (strlen(key->label) == labelLength && memcmp(key->label, label, labelLength) == 0 &&
-            strlen(key->id) == idLength && memcmp(key->id, id, idLength) == 0) {
+            key->id_len == idLength && memcmp(key->id, id, idLength) == 0) {
             return PKCS11_get_private_key(key);
         }
     }
@@ -306,7 +306,7 @@ X509 *find_certificate(const char *label, const char *id, const PKCS11_SLOT *slo
     for (unsigned int i = 0; i < certsCount; ++i) {
         PKCS11_CERT *cert = &certs[i];
         if (strlen(cert->label) == labelLength && memcmp(cert->label, label, labelLength) == 0 &&
-            strlen(cert->id) == idLength && memcmp(cert->id, id, idLength) == 0) {
+            cert->id_len == idLength && memcmp(cert->id, id, idLength) == 0) {
                 return cert->x509;
         }
     }
