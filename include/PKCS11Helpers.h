@@ -51,7 +51,7 @@ typedef struct {
  * Frees MQTTClient_sslPkcs11Properties struct members
  */
 void free_sslPkcs11Properties_members(
-    MQTTClient_sslPkcs11Properties *pkcs11Properties);
+    const MQTTClient_sslPkcs11Properties *pkcs11Properties);
 
 /**
  * Safely duplicates MQTTClient_sslPkcs11Properties struct members
