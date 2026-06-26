@@ -191,7 +191,7 @@ int pkcs11_load_certificate(const SSL_CTX *ssl_ctx,
         goto failed;
     }
 
-    if (try_log_in(slot, pkcs11Properties->certTokenPin) != PAHO_PKCS11_OK) {
+    if (!try_log_in(slot, pkcs11Properties->certTokenPin)) {
         goto failed;
     }
 
@@ -222,7 +222,7 @@ int pkcs11_load_ca(const SSL_CTX *ssl_ctx, const MQTTClient_sslPkcs11Properties 
         goto failed;
     }
 
-    if (try_log_in(slot, pkcs11Properties->caTokenPin) != PAHO_PKCS11_OK) {
+    if (!try_log_in(slot, pkcs11Properties->caTokenPin)) {
         goto failed;
     }
 
