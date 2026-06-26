@@ -38,6 +38,9 @@
 #endif
 #include "SocketBuffer.h"
 #include "StackTrace.h"
+#if defined(OPENSSL)
+#include "SSLSocket.h"
+#endif
 #include "Heap.h"
 
 #if !defined(min)
@@ -840,6 +843,7 @@ void MQTTProtocol_freeClient(Clients* client)
 	if (client->net.http_proxy_auth)
 		free(client->net.http_proxy_auth);
 #if defined(OPENSSL)
+	SSLSocket_destroyContext(&client->net);
 	if (client->net.https_proxy_auth)
 		free(client->net.https_proxy_auth);
 	if (client->sslopts)
