@@ -670,13 +670,14 @@ typedef struct
 	/** The eyecatcher for this structure.  Must be MQTS */
 	char struct_id[4];
 
-	/** The version number of this structure. Must be 0, 1, 2, 3, 4 or 5.
+	/** The version number of this structure. Must be 0, 1, 2, 3, 4, 5, 6 or 7.
 	 * 0 means no sslVersion
 	 * 1 means no verify, CApath
 	 * 2 means no ssl_error_context, ssl_error_cb
 	 * 3 means no ssl_psk_cb, ssl_psk_context, disableDefaultTrustStore
 	 * 4 means no protos, protos_len
 	 * 5 means no store selection
+	 * 6 means no sslContext
 	 */
 	int struct_version;
 
@@ -813,9 +814,19 @@ typedef struct
 	* Only used if struct_version is >= 2.
 	*/
 	int privateKeyType;
+
+	/**
+	 * An externally-constructed SSL_CTX to use instead of Paho's internal context.
+	 * When non-NULL and struct_version >= 7, Paho calls SSL_CTX_up_ref() and uses
+	 * this context directly, skipping all file-based certificate/key loading.
+	 * The application retains ownership and must call SSL_CTX_free() after Paho
+	 * disconnects.
+	 * Exists only if struct_version >= 7
+	 */
+	void* sslContext;
 } MQTTClient_SSLOptions;
 
-#define MQTTClient_SSLOptions_initializer { {'M', 'Q', 'T', 'S'}, 6, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 1, MQTT_SSL_VERSION_DEFAULT, 0, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, MQTT_FILE_STORE, MQTT_FILE_STORE, MQTT_FILE_STORE }
+#define MQTTClient_SSLOptions_initializer { {'M', 'Q', 'T', 'S'}, 7, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 1, MQTT_SSL_VERSION_DEFAULT, 0, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, MQTT_FILE_STORE, MQTT_FILE_STORE, MQTT_FILE_STORE, NULL }
 
 /**
   * MQTTClient_libraryInfo is used to store details relating to the currently used

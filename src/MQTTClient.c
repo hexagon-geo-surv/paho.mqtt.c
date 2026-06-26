@@ -1691,6 +1691,10 @@ static MQTTResponse MQTTClient_connectURI(MQTTClient handle, MQTTClient_connectO
 			m->c->sslopts->keyStoreType = options->ssl->keyStoreType;
 			m->c->sslopts->privateKeyType = options->ssl->privateKeyType;
 		}
+		if (m->c->sslopts->struct_version >= 7)
+		{
+			m->c->sslopts->sslContext = options->ssl->sslContext;
+		}
 	}
 #endif
 
@@ -1838,7 +1842,7 @@ MQTTResponse MQTTClient_connectAll(MQTTClient handle, MQTTClient_connectOptions*
 #if defined(OPENSSL)
 	if (options->struct_version != 0 && options->ssl) /* check validity of SSL options structure */
 	{
-		if (strncmp(options->ssl->struct_id, "MQTS", 4) != 0 || options->ssl->struct_version < 0 || options->ssl->struct_version > 6)
+		if (strncmp(options->ssl->struct_id, "MQTS", 4) != 0 || options->ssl->struct_version < 0 || options->ssl->struct_version > 7)
 		{
 			rc.reasonCode = MQTTCLIENT_BAD_STRUCTURE;
 			goto exit;

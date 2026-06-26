@@ -552,6 +552,15 @@ int SSLSocket_createContext(networkHandles* net, MQTTClient_SSLOptions* opts)
 
 	FUNC_ENTRY;
 
+	/* IoC: accept externally-constructed SSL_CTX */
+	if (opts->struct_version >= 7 && opts->sslContext != NULL)
+	{
+		net->ctx = (SSL_CTX *)opts->sslContext;
+		SSL_CTX_up_ref(net->ctx);
+		SSL_CTX_set_mode(net->ctx, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
+		goto exit;
+	}
+
 	if (net->ctx == NULL)
 	{
 #if (OPENSSL_VERSION_NUMBER >= 0x10100000L)
