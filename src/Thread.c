@@ -239,7 +239,7 @@ int Thread_wait_sem(sem_type sem, int timeout)
 #if defined(USE_TRYWAIT)
 	int i = 0;
 	useconds_t interval = 10000; /* 10000 microseconds: 10 milliseconds */
-	int count = (1000 * timeout) / interval; /* how many intervals in timeout period */
+	int count = (int)((1000LL * timeout) / interval); /* how many intervals in timeout period */
 #else
 	struct timespec ts;
 #endif
