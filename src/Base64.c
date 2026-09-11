@@ -16,26 +16,40 @@
 
 #include "Base64.h"
 
+#ifdef LEICA_CHANGES
+#include <assert.h>
+#endif
+
 #if defined(WIN32) || defined(WIN64)
 #pragma comment(lib, "crypt32.lib")
 #include <Windows.h>
 #include <WinCrypt.h>
 b64_size_t Base64_decode( b64_data_t *out, b64_size_t out_len, const char *in, b64_size_t in_len )
 {
+#ifdef LEICA_CHANGES
+	assert(0 && "Captivate uses Unicode and can't call CryptStringToBinaryA. Beside, this should not be called anyway");
+	return 0;
+#else
 	b64_size_t ret = 0u;
 	DWORD dw_out_len = (DWORD)out_len;
 	if ( CryptStringToBinaryA( in, in_len, CRYPT_STRING_BASE64, out, &dw_out_len, NULL, NULL ) )
 		ret = (b64_size_t)dw_out_len;
 	return ret;
+#endif
 }
 
 b64_size_t Base64_encode( char *out, b64_size_t out_len, const b64_data_t *in, b64_size_t in_len )
 {
+#ifdef LEICA_CHANGES
+	assert(0 && "Captivate uses Unicode and can't call CryptStringToBinaryA. Beside, this should not be called anyway");
+	return 0;
+#else
 	b64_size_t ret = 0u;
 	DWORD dw_out_len = (DWORD)out_len;
 	if ( CryptBinaryToStringA( in, in_len, CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF, out, &dw_out_len ) )
 		ret = (b64_size_t)dw_out_len;
 	return ret;
+#endif
 }
 #else /* if defined(WIN32) || defined(WIN64) */
 

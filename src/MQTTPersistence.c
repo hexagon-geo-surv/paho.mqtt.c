@@ -181,6 +181,7 @@ int MQTTPersistence_restore(Clients *c)
 	int i = 0;
 	int msgs_sent = 0;
 	int msgs_rcvd = 0;
+	MQTTPacket* pack;
 
 	FUNC_ENTRY;
 	if (c->persistence && (rc = c->persistence->pkeys(c->phandle, &msgkeys, &nkeys)) == 0)
@@ -227,7 +228,7 @@ int MQTTPersistence_restore(Clients *c)
 					goto exit;
 				}
 
-				MQTTPacket* pack = MQTTPersistence_restorePacket(data_MQTTVersion, buffer, buflen);
+				pack = MQTTPersistence_restorePacket(data_MQTTVersion, buffer, buflen);
 				if ( pack != NULL )
 				{
 					if (strncmp(cur_key, PERSISTENCE_PUBLISH_RECEIVED,

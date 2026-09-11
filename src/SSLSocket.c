@@ -522,12 +522,10 @@ void SSLSocket_terminate(void)
 static unsigned int call_ssl_psk_cb(SSL *ssl, const char *hint, char *identity, unsigned int max_identity_len, unsigned char *psk, unsigned int max_psk_len)
 {
 	int rc = 0;
-
-	FUNC_ENTRY;
-
 	SSL_CTX *ctx = SSL_get_SSL_CTX(ssl);
 	MQTTClient_SSLOptions* opts = SSL_CTX_get_ex_data(ctx, tls_ex_index_ssl_opts);
 
+	FUNC_ENTRY;
 	if (opts == NULL)
 		goto exit;
 

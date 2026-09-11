@@ -86,6 +86,9 @@ void MQTTClient_global_init(MQTTClient_init_options* inits)
 #if defined(OPENSSL)
 	SSLSocket_handleOpensslInit(inits->do_openssl_init);
 #endif
+#if LEICA_CHANGES
+    MQTTClient_captivate_custom_init();
+#endif
 }
 
 static ClientStates ClientState =
@@ -107,10 +110,16 @@ static mutex_type connect_mutex = NULL;
 extern mutex_type stack_mutex;
 extern mutex_type heap_mutex;
 extern mutex_type log_mutex;
+#if LEICA_CHANGES
+DLLExport int MQTTClient_captivate_custom_init()
+{
+    DWORD ul_reason_for_call = DLL_PROCESS_ATTACH;
+#else
 BOOL APIENTRY DllMain(HANDLE hModule,
 					  DWORD  ul_reason_for_call,
 					  LPVOID lpReserved)
 {
+#endif
 	switch (ul_reason_for_call)
 	{
 		case DLL_PROCESS_ATTACH:
@@ -468,6 +477,8 @@ static void MQTTClient_terminate(void)
 	MQTTClient_stop();
 	if (library_initialized)
 	{
+		Thread_lock_mutex(socket_mutex);
+
 		ListFree(bstate->clients);
 		ListFree(handles);
 		handles = NULL;
@@ -477,6 +488,8 @@ static void MQTTClient_terminate(void)
 		#endif
 		Log_terminate();
 		library_initialized = 0;
+
+		Thread_unlock_mutex(socket_mutex);
 	}
 	FUNC_EXIT;
 }
@@ -742,7 +755,7 @@ static thread_return_type WINAPI MQTTClient_run(void* n)
 	run_id = Thread_getid();
 
 	Thread_lock_mutex(mqttclient_mutex);
-	while (!tostop)
+	while (!tostop && library_initialized)
 	{
 		int rc = SOCKET_ERROR;
 		int sock = -1;
@@ -750,9 +763,12 @@ static thread_return_type WINAPI MQTTClient_run(void* n)
 		MQTTPacket* pack = NULL;
 
 		Thread_unlock_mutex(mqttclient_mutex);
+		// this sleep allows concurrent threads to acquire mqttclient_mutex, especially on
+		// single core devices or on constrained run (e.g. Valgrind on Linux)
+		MQTTClient_sleep(1L);
 		pack = MQTTClient_cycle(&sock, timeout, &rc);
 		Thread_lock_mutex(mqttclient_mutex);
-		if (tostop)
+		if (tostop || !library_initialized)
 			break;
 		timeout = 1000L;
 
@@ -880,7 +896,6 @@ static thread_return_type WINAPI MQTTClient_run(void* n)
 				if ((m->rc = getsockopt(m->c->net.socket, SOL_SOCKET, SO_ERROR, (char*)&error, &len)) == 0)
 					m->rc = error;
 				Log(TRACE_MIN, -1, "Posting connect semaphore for client %s rc %d", m->c->clientID, m->rc);
-				printf("Posting connect semaphore for client %s rc %d", m->c->clientID, m->rc);
 				m->c->connect_state = NOT_IN_PROGRESS;
 				Thread_post_sem(m->connect_sem);
 			}
@@ -905,9 +920,11 @@ static thread_return_type WINAPI MQTTClient_run(void* n)
 #endif
 			else if (m->c->connect_state == WEBSOCKET_IN_PROGRESS)
 			{
+				if (rc != TCPSOCKET_INTERRUPTED) {
 				Log(TRACE_MIN, -1, "Posting websocket handshake for client %s rc %d", m->c->clientID, m->rc);
 				m->c->connect_state = WAIT_FOR_CONNACK;
 				Thread_post_sem(m->connect_sem);
+				}
 			}
 		}
 	}
@@ -1122,8 +1139,9 @@ static MQTTResponse MQTTClient_connectURIVersion(MQTTClient handle, MQTTClient_c
 
 	if (m->c->connect_state == TCP_IN_PROGRESS) /* TCP connect started - wait for completion */
 	{
+		long elapsed = millisecsTimeout - MQTTClient_elapsed(start);
 		Thread_unlock_mutex(mqttclient_mutex);
-		MQTTClient_waitfor(handle, CONNECT, &rc, millisecsTimeout - MQTTClient_elapsed(start));
+		MQTTClient_waitfor(handle, CONNECT, &rc, elapsed > 0 ? elapsed : 0);
 		Thread_lock_mutex(mqttclient_mutex);
 		if (rc != 0)
 		{
@@ -1511,11 +1529,12 @@ MQTTResponse MQTTClient_connectAll(MQTTClient handle, MQTTClient_connectOptions*
 int MQTTClient_connect(MQTTClient handle, MQTTClient_connectOptions* options)
 {
 	MQTTClients* m = handle;
+	MQTTResponse response;
 
 	if (m->c->MQTTVersion >= MQTTVERSION_5)
 		return MQTTCLIENT_WRONG_MQTT_VERSION;
 
-	MQTTResponse response = MQTTClient_connectAll(handle, options, NULL, NULL);
+	response = MQTTClient_connectAll(handle, options, NULL, NULL);
 
 	return response.reasonCode;
 }
@@ -2287,6 +2306,8 @@ static MQTTPacket* MQTTClient_cycle(int* sock, unsigned long timeout, int* rc)
 		tp.tv_usec = (timeout % 1000) * 1000; /* this field is microseconds! */
 	}
 
+	do
+	{
 #if defined(OPENSSL)
 	if ((*sock = SSLSocket_getPendingRead()) == -1)
 	{
@@ -2297,6 +2318,7 @@ static MQTTPacket* MQTTClient_cycle(int* sock, unsigned long timeout, int* rc)
 	}
 #endif
 	Thread_lock_mutex(mqttclient_mutex);
+	if (!library_initialized) break;
 	if (*sock > 0)
 	{
 		MQTTClients* m = NULL;
@@ -2365,6 +2387,8 @@ static MQTTPacket* MQTTClient_cycle(int* sock, unsigned long timeout, int* rc)
 		}
 	}
 	MQTTClient_retry();
+	} while(0);
+
 	Thread_unlock_mutex(mqttclient_mutex);
 	FUNC_EXIT_RC(*rc);
 	return pack;
@@ -2379,6 +2403,12 @@ static MQTTPacket* MQTTClient_waitfor(MQTTClient handle, int packet_type, int* r
 
 	FUNC_ENTRY;
 	if (((MQTTClients*)handle) == NULL || timeout <= 0L)
+	{
+		*rc = MQTTCLIENT_FAILURE;
+		goto exit;
+	}
+
+	if (timeout < 0)
 	{
 		*rc = MQTTCLIENT_FAILURE;
 		goto exit;
@@ -2534,7 +2564,10 @@ void MQTTClient_yield(void)
 {
 	START_TIME_TYPE start = MQTTClient_start_clock();
 	unsigned long elapsed = 0L;
-	unsigned long timeout = 100L;
+	// timeout reduced due to performance reasons
+	// problem appears when sending single packets without buffering
+	// the original gap value of 100ms between send attempts is not acceptable
+	unsigned long timeout = 10L;
 	int rc = 0;
 
 	FUNC_ENTRY;

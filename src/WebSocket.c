@@ -15,7 +15,7 @@
  *    Ian Craggs - use memory tracking
  *******************************************************************************/
 
-#include <stdint.h>
+#include <int_types.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -28,6 +28,8 @@
 #include "MQTTProtocolOut.h"
 #include "SocketBuffer.h"
 #include "StackTrace.h"
+
+#include <assert.h>
 
 #if defined(__linux__)
 #  include <endian.h>
@@ -229,10 +231,14 @@ static int WebSocket_buildFrame(networkHandles* net, int opcode, int mask_data,
 		}
 		else if ( data_len < 0xFFFFFFFFFFFFFFFF )
 		{
+#ifdef LEICA_CHANGES
+			assert(0 && "htonll not implemented on WinCE");
+#else
 			uint64_t len = htobe64((uint64_t)data_len);
 			buf0[buf_len++] |= (127u & 0x7F);
 			memcpy( &buf0[buf_len], &len, 8 );
 			buf_len += 8;
+#endif
 		}
 		else
 		{
@@ -321,6 +327,11 @@ int WebSocket_connect( networkHandles *net, const char *uri )
 	size_t hostname_len;
 	int port = 80;
 	const char *topic = NULL;
+#if defined(WIN32) || defined(WIN64)
+	UUID uuid;
+#else /* if defined(WIN32) || defined(WIN64) */
+	uuid_t uuid;
+#endif /* else if defined(WIN32) || defined(WIN64) */
 
 	FUNC_ENTRY;
 	/* Generate UUID */
@@ -329,12 +340,10 @@ int WebSocket_connect( networkHandles *net, const char *uri )
 	else
 		net->websocket_key = realloc(net->websocket_key, 25u);
 #if defined(WIN32) || defined(WIN64)
-	UUID uuid;
 	ZeroMemory( &uuid, sizeof(UUID) );
 	UuidCreate( &uuid );
 	Base64_encode( net->websocket_key, 25u, (const b64_data_t*)&uuid, sizeof(UUID) );
 #else /* if defined(WIN32) || defined(WIN64) */
-	uuid_t uuid;
 	uuid_generate( uuid );
 	Base64_encode( net->websocket_key, 25u, uuid, sizeof(uuid_t) );
 #endif /* else if defined(WIN32) || defined(WIN64) */
@@ -421,7 +430,8 @@ void WebSocket_close(networkHandles *net, int status_code, const char *reason)
 		header_len = WebSocket_calculateFrameHeaderSize(net,
 			mask_data, buf0len);
 		buf0 = malloc(header_len + buf0len);
-		if ( !buf0 ) return;
+		if ( !buf0 )
+			goto exit;
 
 		/* encode status code */
 		status_code_be = htobe16((uint16_t)status_code);
@@ -453,7 +463,7 @@ void WebSocket_close(networkHandles *net, int status_code, const char *reason)
 		free( net->websocket_key );
 		net->websocket_key = NULL;
 	}
-
+exit:
 	FUNC_EXIT;
 }
 
@@ -615,6 +625,7 @@ char *WebSocket_getRawSocketData(
 {
 	char *rv;
 
+	FUNC_ENTRY;
 	if (bytes > 0)
 	{
 		if (frame_buffer_data_len - frame_buffer_index >= bytes)
@@ -683,9 +694,7 @@ char *WebSocket_getRawSocketData(
 		SocketBuffer_complete(net->socket);
 	}
 	else 
-	{
-		return rv;
-	}
+		goto exit;
 
 	// if possible, return data from the buffer
 	if (bytes > 0)
@@ -705,6 +714,7 @@ char *WebSocket_getRawSocketData(
 	}
 
 exit:
+	FUNC_EXIT;
 	return rv;
 }
 
@@ -729,7 +739,8 @@ void WebSocket_pong(networkHandles *net, char *app_data,
 		header_len = WebSocket_calculateFrameHeaderSize(net, mask_data,
 			app_data_len);
 		buf0 = malloc(header_len);
-		if ( !buf0 ) return;
+		if ( !buf0 )
+			goto exit;
 
 		WebSocket_buildFrame( net, WebSocket_OP_PONG, 1,
 			&buf0[header_len], header_len, mask_data, &app_data,
@@ -751,6 +762,7 @@ void WebSocket_pong(networkHandles *net, char *app_data,
 		/* clean up memory */
 		free( buf0 );
 	}
+exit:
 	FUNC_EXIT;
 }
 
@@ -923,7 +935,11 @@ int WebSocket_receiveFrame(networkHandles *net,
 						goto exit;
 					}
 					/* convert from big-endian 64 to host */
+#ifdef LEICA_CHANGES
+					assert(0 && "ntohll not implemented on WinCE");
+#else
 					payload_len = (size_t)be64toh(*(uint64_t*)b);
+#endif
 				}
 
 				if ( has_mask )
@@ -1092,6 +1108,7 @@ void WebSocket_terminate( void )
  * @param[in,out]  net                 network connection to upgrade
  *
  * @retval SOCKET_ERROR                failed to upgrade network connection
+ * @retval TCPSOCKET_INTERRUPTED       upgrade not complete, but not failed.  Try again
  * @retval 1                           socket upgraded to use websockets
  *
  * @see WebSocket_connect
@@ -1121,6 +1138,11 @@ int WebSocket_upgrade( networkHandles *net )
 		rc = TCPSOCKET_INTERRUPTED;
 		read_buf = WebSocket_getRawSocketData( net, 12u, &rcv );
 
+		if (read_buf && rcv < 12u) {
+			Log(TRACE_PROTOCOL, 1, "WebSocket upgrade read not complete %lu", rcv );
+			goto exit;
+		}
+
 		if ( rcv > 0 && strncmp( read_buf, "HTTP/1.1", 8u ) == 0 )
 		{
 			if (strncmp( &read_buf[9], "101", 3u ) != 0)
@@ -1134,6 +1156,7 @@ int WebSocket_upgrade( networkHandles *net )
 		if ( rcv > 0 && strncmp( read_buf, "HTTP/1.1 101", 12u ) == 0 )
 		{
 			const char *p;
+
 			read_buf = WebSocket_getRawSocketData( net, 500u, &rcv );
 
 			/* check for upgrade */

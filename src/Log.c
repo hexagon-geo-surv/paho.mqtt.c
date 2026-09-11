@@ -38,6 +38,10 @@
 #include <time.h>
 #include <string.h>
 
+#ifdef UNDER_CE
+#include <io.h>
+#endif
+
 #if !defined(WIN32) && !defined(WIN64)
 #include <syslog.h>
 #include <sys/stat.h>

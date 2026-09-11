@@ -172,6 +172,12 @@ In this case the libraries and executable are not linked against OpenSSL Librari
 apt-get install gcc-mingw-w64-x86-64 gcc-mingw-w64-i686
 ```
 
+### Leica platform notes
+
+The Leica Captivate integration includes compatibility changes for constrained Windows CE-based targets. Captivate-specific code is enabled with the `LEICA_CHANGES` definition; Windows CE logging support uses the `UNDER_CE` definition. These changes include an exported Captivate initialization entry point, safer client-thread shutdown and connection timeout handling, protection against continuing after interrupted WebSocket handshakes, and a shorter synchronous-yield interval for responsive single-packet transfers.
+
+The public API headers are located in the top-level `include` directory and are installed with the libraries. Private implementation headers remain in `src`.
+
 ## Usage and API
 
 Detailed API documentation is available by building the Doxygen docs in the  ``doc`` directory. A [snapshot is also available online](https://www.eclipse.org/paho/files/mqttdoc/MQTTClient/html/index.html).

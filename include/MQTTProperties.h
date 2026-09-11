@@ -50,12 +50,17 @@ enum MQTTPropertyCodes {
   MQTTPROPERTY_CODE_SHARED_SUBSCRIPTION_AVAILABLE = 42/**< The value is 241 */
 };
 
+#ifdef LEICA_CHANGES
+#include "Paho_Export.h"
+#define DLLExport PAHO_EXPORT
+#else
 #if defined(WIN32) || defined(WIN64)
   #define DLLImport __declspec(dllimport)
   #define DLLExport __declspec(dllexport)
 #else
   #define DLLImport extern
   #define DLLExport __attribute__ ((visibility ("default")))
+#endif
 #endif
 
 /**

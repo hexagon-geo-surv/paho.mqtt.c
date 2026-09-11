@@ -21,6 +21,7 @@
 ## compilation/linkage settings
 INCLUDE_DIRECTORIES(
     .
+    ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_BINARY_DIR}
     )
 
@@ -102,7 +103,14 @@ IF (PAHO_BUILD_STATIC)
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 ENDIF()
 
-INSTALL(FILES MQTTAsync.h MQTTClient.h MQTTClientPersistence.h MQTTProperties.h MQTTReasonCodes.h MQTTSubscribeOpts.h
+INSTALL(FILES
+    ${CMAKE_SOURCE_DIR}/include/MQTTAsync.h
+    ${CMAKE_SOURCE_DIR}/include/MQTTClient.h
+    ${CMAKE_SOURCE_DIR}/include/MQTTClientPersistence.h
+    ${CMAKE_SOURCE_DIR}/include/MQTTProperties.h
+    ${CMAKE_SOURCE_DIR}/include/MQTTReasonCodes.h
+    ${CMAKE_SOURCE_DIR}/include/MQTTSubscribeOpts.h
+    ${CMAKE_SOURCE_DIR}/include/Paho_Export.h
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 IF (PAHO_WITH_SSL)

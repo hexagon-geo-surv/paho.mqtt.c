@@ -32,7 +32,7 @@
 
 #define URI_SSL "ssl://"
 
-/** if we should handle openssl initialization (bool_value == 1) or depend on it to be initalized externally (bool_value == 0) */
+/** if we should handle openssl initialization (bool_value == 1) or depend on it to be initialized externally (bool_value == 0) */
 void SSLSocket_handleOpensslInit(int bool_value);
 
 int SSLSocket_initialize(void);
