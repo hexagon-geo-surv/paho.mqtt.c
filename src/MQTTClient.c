@@ -887,16 +887,13 @@ static thread_return_type WINAPI MQTTClient_run(void* n)
 			{
 				qEntry* qe = (qEntry*)(m->c->messageQueue->first->content);
 				int topicLen = qe->topicLen;
-				int msgId = -1;
 
 				if (strlen(qe->topicName) == topicLen)
 					topicLen = 0;
 
 				Log(TRACE_MIN, -1, "Calling messageArrived for client %s, queue depth %d",
 					m->c->clientID, m->c->messageQueue->count);
-
-				msgId = qe->msg->msgid;
-
+				const int msgId = qe->msg->msgid;
 				Thread_unlock_mutex(mqttclient_mutex);
 				rc = (*(m->ma))(m->context, qe->topicName, topicLen, qe->msg);
 				Thread_lock_mutex(mqttclient_mutex);
