@@ -2075,6 +2075,27 @@ endif()
 
 
 if(PAHO_BUILD_STATIC)
+	add_executable(test_issue1700-static test_issue1700.c)
+	target_link_libraries(test_issue1700-static paho-mqtt3a-static)
+
+	add_test(
+		NAME test_issue1700-1-tcp_connect_pending_cpu_and_logs-static
+		COMMAND "test_issue1700-static" "--test_no" "1"
+	)
+endif()
+
+if(PAHO_BUILD_SHARED)
+	add_executable(test_issue1700 test_issue1700.c)
+	target_link_libraries(test_issue1700 paho-mqtt3a)
+
+	add_test(
+		NAME test_issue1700-1-tcp_connect_pending_cpu_and_logs
+		COMMAND "test_issue1700" "--test_no" "1"
+	)
+endif()
+
+
+if(PAHO_BUILD_STATIC)
 	add_executable(test_sync_session_present-static test_sync_session_present.c)
 	target_link_libraries(test_sync_session_present-static paho-mqtt3c-static)
 	
